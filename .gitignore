@@ -1,0 +1,5 @@
+.DS_Store
+
+# Operational docs (author guide + team runbook) are kept locally for the
+# maintainer's reference only — never committed to this (public) repo.
+docs/

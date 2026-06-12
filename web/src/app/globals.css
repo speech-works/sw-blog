@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+/* Brand tokens + chrome utilities (marquee, glass, --nav-height) now come from the
+   shared package, so the blog and the marketing site can never drift. */
+@import "@speech-works/web-chrome/styles.css";
+/* Let Tailwind generate the utility classes used inside the package components. */
+@source "../../node_modules/@speech-works/web-chrome/dist";
+
+:root {
+  --background: #fffaf5;
+  --foreground: #3f332d;
+  scroll-behavior: smooth;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--color-app-bg);
+  color: var(--color-app-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
