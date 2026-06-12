@@ -5,15 +5,16 @@ import {
   type DocumentActionProps,
 } from "sanity";
 
-// Editors allowed to Approve + Publish. Sanity's free tier only has admin/viewer
-// roles (everyone who can write is an "administrator"), so we separate authors from
-// editors with an email allow-list instead of a real role.
+// Editors allowed to Approve + Publish, separated from regular authors by an email
+// allow-list (the free tier has no real per-user roles).
 //
-// IMPORTANT: add the email of every approver here (lowercase), then redeploy the
-// Studio (`npx sanity deploy`). If this list is empty, NOBODY can approve/publish.
-export const EDITORS: string[] = [
-  // "you@speechworks.in",
-];
+// The list comes from the SANITY_STUDIO_EDITORS env var (comma-separated) so the
+// emails live in studio/.env + the deploy environment, never in this public repo.
+// Set it, then redeploy the Studio (`npm run deploy`). If unset, NOBODY can publish.
+const EDITORS: string[] = (process.env.SANITY_STUDIO_EDITORS ?? "")
+  .split(",")
+  .map((e) => e.trim().toLowerCase())
+  .filter(Boolean);
 
 export function isEditorUser(
   user: { email?: string | null } | null | undefined,
@@ -22,10 +23,8 @@ export function isEditorUser(
   return !!email && EDITORS.map((e) => e.toLowerCase()).includes(email);
 }
 
-// NOTE (honest caveat): this is still UI-level. An editor-email user is technically
-// an administrator and could bypass via the raw API. Hard enforcement (authors
-// physically cannot publish) needs paid custom roles. For a small trusted team this
-// allow-list is the intended, accepted behaviour.
+// This is UI-level enforcement; hard per-user enforcement needs paid Sanity custom
+// roles. The trade-offs are documented in the internal team runbook, not here.
 
 function getStatus(props: DocumentActionProps): string | undefined {
   const doc = (props.draft || props.published) as
