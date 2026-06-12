@@ -62,13 +62,24 @@ export default async function PostPage({
     ? urlForImage(post.coverImage).width(1600).url()
     : null;
 
+  // Author photo is optional: show it when the author has one, otherwise fall back
+  // to a brand-tinted initial so the card always looks intentional.
+  const authorPhoto = post.author?.photo
+    ? urlForImage(post.author.photo).width(160).height(160).fit("crop").url()
+    : null;
+  const authorInitial =
+    post.author?.name?.trim().charAt(0).toUpperCase() ?? "";
+
   return (
     <main className="relative mx-auto max-w-3xl px-5 pt-12 sm:px-6">
       <Link
         href="/"
-        className="text-sm font-semibold text-brand-600 transition-colors hover:text-brand"
+        className="group inline-flex items-center gap-2 rounded-full border border-brand/20 bg-white/70 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-brand-600 shadow-sm backdrop-blur transition-colors hover:border-brand/40 hover:text-brand"
       >
-        ← All articles
+        <span aria-hidden className="transition-transform group-hover:-translate-x-0.5">
+          ←
+        </span>
+        All articles
       </Link>
 
       <article className="mt-8">
@@ -116,17 +127,36 @@ export default async function PostPage({
           <PortableBody value={post.body} />
         </div>
 
-        {post.author?.bio ? (
-          <footer className="mt-16 rounded-3xl border border-black/5 bg-app-card p-6 shadow-soft-orange">
-            <p className="text-xs font-bold uppercase tracking-widest text-brand-600">
-              About the author
-            </p>
-            <p className="mt-2 font-semibold text-app-title">
-              {byline(post.author.name, post.author.credentials)}
-            </p>
-            <p className="mt-2 text-sm leading-relaxed text-gray-600">
-              {post.author.bio}
-            </p>
+        {post.author?.name ? (
+          <footer className="mt-16 flex items-start gap-5 rounded-[1.75rem] border border-black/5 bg-app-card p-6 shadow-soft-orange sm:p-7">
+            {authorPhoto ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={authorPhoto}
+                alt={post.author.name}
+                className="h-16 w-16 shrink-0 rounded-full object-cover ring-1 ring-black/5"
+              />
+            ) : (
+              <span
+                aria-hidden
+                className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-brand-50 text-xl font-bold text-brand-600 ring-1 ring-black/5"
+              >
+                {authorInitial}
+              </span>
+            )}
+            <div className="min-w-0">
+              <p className="text-[11px] font-black uppercase tracking-[0.2em] text-brand-600">
+                About the author
+              </p>
+              <p className="mt-1.5 text-base font-bold text-app-title">
+                {byline(post.author.name, post.author.credentials)}
+              </p>
+              {post.author.bio ? (
+                <p className="mt-2 text-sm leading-relaxed text-app-muted">
+                  {post.author.bio}
+                </p>
+              ) : null}
+            </div>
           </footer>
         ) : null}
       </article>
