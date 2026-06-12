@@ -6,6 +6,19 @@ import { urlForImage } from "@/lib/sanity.image";
 import { byline, formatDate } from "@/lib/format";
 import PortableBody from "@/components/PortableBody";
 
+// A Sanity image asset _ref encodes the original pixel size ("...-1600x1164-jpg").
+// Parsing it lets us set width/height on the <img> so the browser reserves the box
+// before the image loads, preventing the article from shifting down (CLS).
+function imageDimensions(
+  source: unknown,
+): { width: number; height: number } | null {
+  const ref =
+    (source as { asset?: { _ref?: string } } | null)?.asset?._ref ??
+    (source as { _ref?: string } | null)?._ref;
+  const match = /-(\d+)x(\d+)-/.exec(typeof ref === "string" ? ref : "");
+  return match ? { width: Number(match[1]), height: Number(match[2]) } : null;
+}
+
 export const revalidate = 60;
 // Pre-render known slugs at build; render brand-new ones on first request (ISR).
 export const dynamicParams = true;
@@ -61,6 +74,7 @@ export default async function PostPage({
   const cover = post.coverImage
     ? urlForImage(post.coverImage).width(1600).url()
     : null;
+  const coverDims = post.coverImage ? imageDimensions(post.coverImage) : null;
 
   // Author photo is optional: show it when the author has one, otherwise fall back
   // to a brand-tinted initial so the card always looks intentional.
@@ -119,7 +133,13 @@ export default async function PostPage({
         {cover ? (
           <div className="mt-8 overflow-hidden rounded-3xl">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={cover} alt={post.title} className="w-full" />
+            <img
+              src={cover}
+              alt={post.title}
+              width={coverDims?.width}
+              height={coverDims?.height}
+              className="h-auto w-full"
+            />
           </div>
         ) : null}
 
