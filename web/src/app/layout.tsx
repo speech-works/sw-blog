@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     template: "%s | Speechworks Blog",
   },
   description:
-    "Practical insights from speech-language pathologists on fluency, therapy, and everyday communication, from the Speechworks clinical community.",
+    "Lived experience and evidence-informed insight on stuttering, fluency, and communication, written by people who stutter and speech-language pathologists at Speechworks.",
   alternates: { canonical: `${basePath || ""}/` },
 };
 

@@ -15,11 +15,22 @@ export default async function BlogIndexPage() {
           The Speechworks Blog
         </p>
         <h1 className="mt-4 text-4xl font-bold tracking-tight text-app-title md:text-5xl">
-          Notes from the clinical community
+          Voices from people who stutter and SLPs
         </h1>
         <p className="mt-5 text-lg leading-relaxed text-gray-600">
-          Practical, evidence-informed writing from speech-language pathologists on
-          fluency, therapy, and communication in the real world.
+          Lived experience and evidence-informed insight on stuttering, fluency, and
+          everyday communication, written by people who stutter and the
+          speech-language pathologists who work alongside them.
+        </p>
+        <p className="mt-6 text-base text-gray-600">
+          Are you a person who stutters or an SLP with something to share?{" "}
+          <a
+            href="mailto:contact@speechworks.in?subject=Writing%20for%20the%20Speechworks%20blog"
+            className="font-semibold text-brand-600 underline decoration-brand/30 underline-offset-2 transition-colors hover:text-brand"
+          >
+            Write with us
+          </a>
+          .
         </p>
       </header>
 
@@ -27,7 +38,7 @@ export default async function BlogIndexPage() {
         <div className="mx-auto mt-16 max-w-md rounded-3xl border border-dashed border-brand/30 bg-brand-50/50 p-10 text-center">
           <p className="text-lg font-semibold text-app-title">No posts yet</p>
           <p className="mt-2 text-sm text-app-muted">
-            New articles will appear here as our SLPs publish them.
+            New articles will appear here as our community publishes them.
           </p>
         </div>
       ) : (
