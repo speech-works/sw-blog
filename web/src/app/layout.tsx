@@ -37,7 +37,7 @@ export default function RootLayout({
         {/* Flex column so the footer sits at the viewport bottom on short pages.
             The fixed navbar is offset via --nav-height (matches sw-landing). */}
         <div className="flex min-h-dvh flex-col">
-          <div className="flex-1 pt-[var(--nav-height)]">{children}</div>
+          <div className="flex-1 pt-[var(--nav-height)] pb-20 md:pb-28">{children}</div>
           <SiteFooter />
         </div>
       </body>
