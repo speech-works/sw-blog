@@ -21,5 +21,6 @@ export interface PostListItem {
 
 export interface Post extends PostListItem {
   body: PortableTextBlock[];
+  _updatedAt?: string;
   author?: Author;
 }

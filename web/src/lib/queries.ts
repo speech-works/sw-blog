@@ -22,6 +22,7 @@ const allPostsQuery = `*[_type == "post" && defined(slug.current)]
 const postBySlugQuery = `*[_type == "post" && slug.current == $slug][0]{
   ${listFields},
   body,
+  _updatedAt,
   author->{ name, credentials, photo, bio }
 }`;
 
