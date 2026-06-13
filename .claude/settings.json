@@ -1,0 +1,8 @@
+{
+  "extraKnownMarketplaces": {
+    "speechworks": {
+      "source": { "source": "github", "repo": "speech-works/sw-guardrails" }
+    }
+  },
+  "enabledPlugins": ["sw-guardrails@speechworks"]
+}
