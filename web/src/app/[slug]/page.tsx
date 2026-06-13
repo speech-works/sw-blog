@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPostBySlug, getPostSlugs } from "@/lib/queries";
 import { urlForImage } from "@/lib/sanity.image";
+import { siteUrl, basePath } from "@/lib/env";
 import { byline, formatDate } from "@/lib/format";
 import PortableBody from "@/components/PortableBody";
 
@@ -39,25 +40,33 @@ export async function generateMetadata({
   const post = await getPostBySlug(slug);
   if (!post) return { title: "Post not found" };
 
+  // Use the post's cover when it has one; otherwise fall back to the site's
+  // branded OG card so a cover-less post never shares as a blank preview.
   const ogImage = post.coverImage
     ? urlForImage(post.coverImage).width(1200).height(630).fit("crop").url()
-    : undefined;
+    : `${siteUrl}${basePath}/opengraph-image`;
 
   return {
     title: post.title,
     description: post.excerpt,
+    alternates: { canonical: `${basePath || ""}/${slug}` },
+    authors: post.author?.name ? [{ name: post.author.name }] : undefined,
+    keywords: post.tags,
     openGraph: {
       title: post.title,
       description: post.excerpt,
       type: "article",
       publishedTime: post.publishedAt,
-      images: ogImage ? [{ url: ogImage, width: 1200, height: 630 }] : undefined,
+      modifiedTime: post._updatedAt,
+      authors: post.author?.name ? [post.author.name] : undefined,
+      tags: post.tags,
+      images: [{ url: ogImage, width: 1200, height: 630 }],
     },
     twitter: {
       card: "summary_large_image",
       title: post.title,
       description: post.excerpt,
-      images: ogImage ? [ogImage] : undefined,
+      images: [ogImage],
     },
   };
 }
@@ -84,8 +93,54 @@ export default async function PostPage({
   const authorInitial =
     post.author?.name?.trim().charAt(0).toUpperCase() ?? "";
 
+  // Article + breadcrumb structured data so Google can show rich results for a
+  // post (headline, author, dates, breadcrumb). Built only from the post's own
+  // fields; publisher points at the Organization defined on the homepage.
+  const base = `${siteUrl}${basePath}`;
+  const postUrl = `${base}/${slug}`;
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "BlogPosting",
+        "@id": `${postUrl}#article`,
+        headline: post.title,
+        ...(post.excerpt ? { description: post.excerpt } : {}),
+        ...(cover ? { image: cover } : {}),
+        ...(post.publishedAt ? { datePublished: post.publishedAt } : {}),
+        dateModified: post._updatedAt ?? post.publishedAt,
+        ...(post.author?.name
+          ? { author: { "@type": "Person", name: post.author.name } }
+          : {}),
+        publisher: {
+          "@type": "Organization",
+          "@id": `${base}/#organization`,
+          name: "Speechworks",
+          logo: {
+            "@type": "ImageObject",
+            url: `${siteUrl}/assets/logo.png`,
+          },
+        },
+        mainEntityOfPage: { "@type": "WebPage", "@id": postUrl },
+        inLanguage: "en",
+        ...(post.tags?.length ? { keywords: post.tags.join(", ") } : {}),
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Blog", item: `${base}/` },
+          { "@type": "ListItem", position: 2, name: post.title, item: postUrl },
+        ],
+      },
+    ],
+  };
+
   return (
     <main className="relative mx-auto max-w-3xl px-5 pt-12 sm:px-6">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Link
         href="/"
         className="group inline-flex items-center gap-2 rounded-full border border-brand/20 bg-white/70 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-brand-600 shadow-sm backdrop-blur transition-colors hover:border-brand/40 hover:text-brand"
