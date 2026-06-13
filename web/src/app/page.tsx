@@ -99,9 +99,7 @@ export default async function BlogIndexPage() {
           Voices on stuttering and stammering
         </h1>
         <p className="mt-5 text-lg leading-relaxed text-gray-600">
-          This blog publishes two kinds of writing: stories from people who
-          stutter, and evidence-based guidance from the speech-language
-          pathologists (SLPs) who work with them. We write about stuttering and
+          We write about stuttering and
           stammering as something to live with and speak through, not something
           to cure.
         </p>
