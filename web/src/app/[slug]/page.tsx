@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPostBySlug, getPostSlugs } from "@/lib/queries";
 import { urlForImage } from "@/lib/sanity.image";
-import { siteUrl, basePath } from "@/lib/env";
+import { siteUrl, basePath, marketingUrl } from "@/lib/env";
 import { byline, formatDate } from "@/lib/format";
 import PortableBody from "@/components/PortableBody";
 
@@ -118,7 +118,7 @@ export default async function PostPage({
           name: "Speechworks",
           logo: {
             "@type": "ImageObject",
-            url: `${siteUrl}/assets/logo.png`,
+            url: `${marketingUrl}/assets/logo.png`,
           },
         },
         mainEntityOfPage: { "@type": "WebPage", "@id": postUrl },

@@ -196,7 +196,8 @@ ends — that keeps the blog at $0.
 | `NEXT_PUBLIC_SANITY_PROJECT_ID` | `po5f2sxg` |
 | `NEXT_PUBLIC_SANITY_DATASET` | `production` |
 | `NEXT_PUBLIC_SANITY_API_VERSION` | `2024-10-01` |
-| `NEXT_PUBLIC_SITE_URL` | `https://speechworks.app` |
+| `NEXT_PUBLIC_SITE_URL` | `https://blog.speechworks.app` — this blog's own origin (canonical, OG, sitemap) |
+| `NEXT_PUBLIC_MARKETING_URL` | `https://speechworks.app` — marketing site (chrome logo + nav back-links) |
 | `NEXT_PUBLIC_BASE_PATH` | *(empty — served at the `blog.speechworks.app` subdomain root)* |
 | `SANITY_REVALIDATE_SECRET` | shared webhook secret — must match Netlify's value and the Sanity webhook |
 

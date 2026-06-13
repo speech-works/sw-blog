@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { Navbar, Footer, type WebChromeConfig } from "@speech-works/web-chrome";
-import { siteUrl } from "@/lib/env";
+import { marketingUrl } from "@/lib/env";
 
 // Client wrapper: builds the web-chrome config (with next/link for client-side nav)
 // and renders the shared Navbar/Footer. Must be a client component because the
 // config carries a LinkComponent, which can't cross the Server -> Client boundary.
-const SITE = siteUrl;
+// Chrome assets (the logo) and nav links point at the marketing site, not the blog.
+const SITE = marketingUrl;
 
 const config: WebChromeConfig = {
   assetBaseUrl: SITE,

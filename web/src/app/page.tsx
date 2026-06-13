@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getAllPosts } from "@/lib/queries";
-import { siteUrl, basePath } from "@/lib/env";
+import { siteUrl, basePath, marketingUrl } from "@/lib/env";
 import PostCard from "@/components/PostCard";
 
 // Time-based ISR: the index re-renders at most once a minute, and the publish
@@ -58,7 +58,7 @@ export default async function BlogIndexPage() {
         url: base,
         logo: {
           "@type": "ImageObject",
-          url: `${siteUrl}/assets/logo.png`,
+          url: `${marketingUrl}/assets/logo.png`,
         },
         email: "contact@speechworks.in",
         description:
