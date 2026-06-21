@@ -1,9 +1,10 @@
 # Speechworks Blog (`sw-blog`)
 
 The blog for speechworks.app, where people who stutter and SLPs publish articles.
-Authors write in a hosted **Sanity Studio** (WYSIWYG + draft/review/approve/publish);
-a separate **Next.js ISR app** serves the public blog. Publishing a post refreshes
-the live site in seconds **without rebuilding the landing site or this app**.
+Authors write in a hosted **Sanity Studio v6** (WYSIWYG + draft/review/approve/publish,
+plus side-by-side **visual-editing preview**); a separate **Next.js 16 app** serves the
+public blog. Publishing a post refreshes the live site in seconds **without rebuilding
+the landing site or this app**.
 
 It is already deployed and live — this README explains how the pieces fit together
 and how to work on them, not how to provision them from scratch.
@@ -57,30 +58,72 @@ two properties can't visually drift. See [Changing the shared chrome](#changing-
 
 ---
 
+## Content model & authorship
+
+Content lives in Sanity (project `po5f2sxg`, dataset `production`). Two document types:
+
+- **`post`** — `title`, `slug`, `author` (ref), `coAuthors` (refs, optional),
+  `peerReviewers` (refs to SLP authors, optional), `excerpt`, `coverImage`, `body`
+  (Portable Text), `audioUrl` (optional narration), `tags`, `publishedAt`,
+  `workflowStatus` (draft → in review → approved → published).
+- **`author`** — `name`, `credentials`, `role` (Person who stutters / SLP / Parent /
+  Researcher / Ally), `photo`, `bio`.
+
+Together these power the blog's **trust layer**: a sticky author panel, role badges,
+dual-voice (PWS + named SLP) bylines, "peer reviewed by" credits, reading time, and
+optional audio narration. See [`web/src/app/[slug]/page.tsx`](web/src/app/[slug]/page.tsx)
+and [`web/src/components/AuthorPanel.tsx`](web/src/components/AuthorPanel.tsx).
+
+---
+
 ## Run it locally
 
-Two independent apps, each with its own `package.json` — install and run them
-separately. **Both require Node 20+** (`nvm use 20`; Node 16 will not work).
+> **Node 22+ required** (Sanity Studio v6 needs ≥22.12; Next.js 16 / React 19.2).
+> A `.nvmrc` pinned to `22` sits at the repo root and in each package — run `nvm use`.
 
-### `web/` — the public blog
+### Both at once (recommended)
+
+From the **repo root**, one command runs `web` and `studio` together, picks free ports
+automatically, and wires the visual-editing preview between them:
+
+```bash
+nvm use          # Node 22
+npm run dev      # starts web + studio together (first time: install each app below)
+```
+
+It prints the URLs it chose, e.g.:
+
+```text
+  ● web     http://localhost:3005
+  ● studio  http://localhost:3333   ← open this, then click "Presentation"
+  (stop both with Ctrl+C)
+```
+
+If 3005 / 3333 are busy it grabs other free ports and **still wires preview correctly** —
+each server is told the other's actual port at launch. The orchestrator is
+[`scripts/dev.mjs`](scripts/dev.mjs) (plain Node, no extra dependencies).
+
+### Or run each app on its own
+
+**`web/` — the public blog**
 
 ```bash
 cd web
 cp .env.example .env.local      # first time only — values in the env table below
-nvm use 20 && npm install
+nvm use && npm install
 
-npm run dev      # dev server with hot reload  ->  http://localhost:3000
+npm run dev      # dev server (Turbopack)  ->  http://localhost:3000
 npm run build    # production build (exactly what Netlify runs)
 npm run start    # serve the production build locally (after `npm run build`)
 npm run lint     # ESLint
 ```
 
-### `studio/` — the author portal
+**`studio/` — the author portal**
 
 ```bash
 cd studio
 cp .env.example .env            # first time only
-nvm use 20 && npm install
+nvm use && npm install
 
 npm run dev      # local Studio  ->  http://localhost:3333
 npm run build    # build the Studio bundle
@@ -89,6 +132,19 @@ npm run deploy   # publish the hosted Studio  ->  speechworks-blog.sanity.studio
 
 Other Sanity CLI helpers from `studio/`: `npx sanity login` / `logout`,
 `npx sanity manage` (open the project dashboard), `npx sanity dataset list`.
+
+### Live preview (visual editing)
+
+Editors can preview unpublished drafts in the real blog layout, side-by-side, with
+click-to-edit — via the Studio's **Presentation** tool:
+
+1. Create a Sanity **Viewer** token: `sanity.io/manage` → project → API → Tokens.
+2. Put it in `web/.env.local` as `SANITY_API_READ_TOKEN=…` (server-only; never commit).
+3. Run `npm run dev` from the root → open the **studio** URL → click **Presentation**.
+
+Drafts are private, so the read token is required to render them (published content
+works without it). In production, set the same token in the web host's env. Built on
+`next-sanity` (Live Content API + visual editing) + Sanity's `presentationTool`.
 
 ---
 
@@ -99,8 +155,10 @@ Other Sanity CLI helpers from `studio/`: `npx sanity login` / `logout`,
 Edit, commit, **push to `main`** → Netlify auto-deploys. Config is in
 [`netlify.toml`](netlify.toml): base `web/`, command `npm run build`, runtime
 `@netlify/plugin-nextjs`. Env vars live in the **Netlify dashboard** (Site
-configuration → Environment variables), not in the repo. Manual deploy (optional,
-needs the Netlify CLI): `cd web && netlify deploy --prod`.
+configuration → Environment variables), not in the repo. **Netlify must build on Node
+22+** (Next 16 requires it) — `web/.nvmrc` (pinned to `22`) sets this automatically,
+otherwise set `NODE_VERSION=22`. Manual deploy (optional, needs the Netlify CLI):
+`cd web && netlify deploy --prod`.
 
 ### Change the author portal, schema, or approval logic (`studio/`)
 
@@ -109,7 +167,7 @@ Editing the Studio is **not** git-triggered. After changing anything under `stud
 redeploy it manually:
 
 ```bash
-cd studio && nvm use 20 && npm run deploy
+cd studio && nvm use && npm run deploy
 ```
 
 Until you redeploy, the hosted Studio at `speechworks-blog.sanity.studio` runs the
@@ -199,10 +257,15 @@ ends — that keeps the blog at $0.
 | `NEXT_PUBLIC_SITE_URL` | `https://blog.speechworks.app` — this blog's own origin (canonical, OG, sitemap) |
 | `NEXT_PUBLIC_MARKETING_URL` | `https://speechworks.app` — marketing site (chrome logo + nav back-links) |
 | `NEXT_PUBLIC_BASE_PATH` | *(empty — served at the `blog.speechworks.app` subdomain root)* |
+| `NEXT_PUBLIC_SANITY_STUDIO_URL` | Studio origin for visual-editing deep-links (prod: `https://speechworks-blog.sanity.studio`) |
 | `SANITY_REVALIDATE_SECRET` | shared webhook secret — must match Netlify's value and the Sanity webhook |
+| `SANITY_API_READ_TOKEN` | **server-only** Sanity Viewer token — renders drafts for visual-editing preview (never commit) |
 
 **`studio/.env`**: `SANITY_STUDIO_PROJECT_ID=po5f2sxg`,
-`SANITY_STUDIO_DATASET=production`, `SANITY_STUDIO_HOST=speechworks-blog`.
+`SANITY_STUDIO_DATASET=production`, `SANITY_STUDIO_HOST=speechworks-blog`,
+`SANITY_STUDIO_EDITORS=<comma-separated editor emails>`, and
+`SANITY_STUDIO_PREVIEW_URL` (the blog origin the Presentation tool previews against;
+the root `npm run dev` sets this automatically for local dev).
 
 ### The publish webhook (Sanity → blog)
 
