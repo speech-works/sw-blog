@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { PostListItem } from "@/lib/types";
 import { urlForImage } from "@/lib/sanity.image";
 import { byline, formatDate } from "@/lib/format";
+import RoleBadge from "./RoleBadge";
 
 export default function PostCard({ post }: { post: PostListItem }) {
   const cover = post.coverImage
@@ -51,13 +52,16 @@ export default function PostCard({ post }: { post: PostListItem }) {
           </p>
         ) : null}
 
-        <div className="mt-5 flex items-center gap-2 text-xs font-medium text-app-muted">
+        <div className="mt-5 flex flex-wrap items-center gap-2 text-xs font-medium text-app-muted">
           {post.author?.name ? (
             <span className="text-app-text">
               {byline(post.author.name, post.author.credentials)}
             </span>
           ) : null}
-          {post.author?.name && post.publishedAt ? <span>·</span> : null}
+          {post.author?.role ? <RoleBadge role={post.author.role} /> : null}
+          {post.author?.name && post.publishedAt ? (
+            <span aria-hidden>·</span>
+          ) : null}
           {post.publishedAt ? (
             <time dateTime={post.publishedAt}>
               {formatDate(post.publishedAt)}

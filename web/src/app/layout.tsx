@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
+import { draftMode } from "next/headers";
+import { VisualEditing } from "next-sanity/visual-editing";
 import "./globals.css";
 import { siteUrl, basePath } from "@/lib/env";
 import { SiteNavbar, SiteFooter } from "@/components/SiteChrome";
+import { SanityLive } from "@/lib/sanity.live";
+import DisableDraftMode from "@/components/DisableDraftMode";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -14,9 +18,10 @@ export const metadata: Metadata = {
   alternates: { canonical: `${basePath || ""}/` },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const { isEnabled: isDraft } = await draftMode();
   return (
     <html lang="en" className="scroll-smooth">
       <head>
@@ -32,14 +37,23 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="antialiased">
+      <body className="antialiased" suppressHydrationWarning>
         <SiteNavbar />
         {/* Flex column so the footer sits at the viewport bottom on short pages.
             The fixed navbar is offset via --nav-height (matches sw-landing). */}
         <div className="flex min-h-dvh flex-col">
-          <div className="flex-1 pt-[var(--nav-height)] pb-20 md:pb-28">{children}</div>
+          <div className="flex-1 pt-[var(--nav-height)] pb-20 md:pb-28">
+            {children}
+          </div>
           <SiteFooter />
         </div>
+        <SanityLive />
+        {isDraft ? (
+          <>
+            <VisualEditing />
+            <DisableDraftMode />
+          </>
+        ) : null}
       </body>
     </html>
   );

@@ -1,0 +1,9 @@
+import { draftMode } from "next/headers";
+import { NextResponse } from "next/server";
+
+// next-sanity 13 ships defineEnableDraftMode but not a disable helper, so this is
+// the manual equivalent: turn Draft Mode off and return to the homepage.
+export async function GET(request: Request) {
+  (await draftMode()).disable();
+  return NextResponse.redirect(new URL("/", request.url));
+}

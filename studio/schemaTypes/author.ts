@@ -32,6 +32,23 @@ export const author = defineType({
       description: 'e.g. "MS, CCC-SLP"',
     }),
     defineField({
+      name: "role",
+      title: "Role",
+      type: "string",
+      description:
+        "Shown as a badge on the article so readers know who is speaking.",
+      options: {
+        list: [
+          { title: "Person who stutters", value: "pws" },
+          { title: "Speech-language pathologist", value: "slp" },
+          { title: "Parent / caregiver", value: "parent" },
+          { title: "Researcher", value: "researcher" },
+          { title: "Ally", value: "ally" },
+        ],
+        layout: "radio",
+      },
+    }),
+    defineField({
       name: "photo",
       title: "Photo",
       type: "image",

@@ -55,6 +55,30 @@ export const post = defineType({
       validation: (rule) => rule.required(),
     }),
     defineField({
+      name: "coAuthors",
+      title: "Co-authors",
+      type: "array",
+      of: [{ type: "reference", to: [{ type: "author" }] }],
+      group: "content",
+      description:
+        "Optional. Additional authors, shown in the byline alongside the main author.",
+    }),
+    defineField({
+      name: "peerReviewers",
+      title: "Peer reviewers (SLPs)",
+      type: "array",
+      of: [
+        {
+          type: "reference",
+          to: [{ type: "author" }],
+          options: { filter: 'role == "slp"' },
+        },
+      ],
+      group: "content",
+      description:
+        "Optional. SLP(s) who peer-reviewed this post. Shown as “Peer reviewed by …”. Separate from the Speechworks editorial check before publishing.",
+    }),
+    defineField({
       name: "excerpt",
       title: "Excerpt",
       type: "text",
@@ -76,6 +100,14 @@ export const post = defineType({
       title: "Body",
       type: "blockContent",
       group: "content",
+    }),
+    defineField({
+      name: "audioUrl",
+      title: "Audio narration URL",
+      type: "url",
+      group: "content",
+      description:
+        "Optional. Link to an audio narration of this article (e.g. an MP3). Shows a “Listen” player.",
     }),
     defineField({
       name: "tags",

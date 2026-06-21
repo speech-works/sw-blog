@@ -4,8 +4,10 @@ import { notFound } from "next/navigation";
 import { getPostBySlug, getPostSlugs } from "@/lib/queries";
 import { urlForImage } from "@/lib/sanity.image";
 import { siteUrl, basePath, marketingUrl } from "@/lib/env";
-import { byline, formatDate } from "@/lib/format";
+import { byline, formatDate, joinNames, readingTime } from "@/lib/format";
 import PortableBody from "@/components/PortableBody";
+import AuthorPanel from "@/components/AuthorPanel";
+import RoleBadge from "@/components/RoleBadge";
 
 // A Sanity image asset _ref encodes the original pixel size ("...-1600x1164-jpg").
 // Parsing it lets us set width/height on the <img> so the browser reserves the box
@@ -37,7 +39,7 @@ export async function generateMetadata({
   params: Promise<Params>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const post = await getPostBySlug(slug);
+  const post = await getPostBySlug(slug, { stega: false });
   if (!post) return { title: "Post not found" };
 
   // Use the post's cover when it has one; otherwise fall back to the site's
@@ -92,6 +94,21 @@ export default async function PostPage({
     : null;
   const authorInitial =
     post.author?.name?.trim().charAt(0).toUpperCase() ?? "";
+  const minutes = readingTime(post.body);
+  // Dereferenced references can be null (a deleted/missing author, or an empty
+  // slot added while editing), so drop nulls before reading any fields.
+  const authors = [
+    ...(post.author ? [post.author] : []),
+    ...(post.coAuthors ?? []),
+  ].filter(Boolean);
+  const coAuthorNames = joinNames(
+    (post.coAuthors ?? []).filter(Boolean).map((a) => a.name),
+  );
+  const peerLabel = joinNames(
+    (post.peerReviewers ?? [])
+      .filter(Boolean)
+      .map((r) => byline(r.name, r.credentials)),
+  );
 
   // Article + breadcrumb structured data so Google can show rich results for a
   // post (headline, author, dates, breadcrumb). Built only from the post's own
@@ -136,7 +153,7 @@ export default async function PostPage({
   };
 
   return (
-    <main className="relative mx-auto max-w-3xl px-5 pt-12 sm:px-6">
+    <main className="relative mx-auto max-w-3xl px-5 pt-12 sm:px-6 lg:max-w-6xl">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -151,90 +168,152 @@ export default async function PostPage({
         All articles
       </Link>
 
-      <article className="mt-8">
-        <header>
-          {post.tags?.length ? (
-            <div className="mb-4 flex flex-wrap gap-2">
-              {post.tags.map((tag) => (
+      <div className="mt-8 lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-12">
+        {post.author?.name ? (
+          <AuthorPanel
+            name={post.author.name}
+            credentials={post.author.credentials}
+            role={post.author.role}
+            bio={post.author.bio}
+            photoUrl={authorPhoto}
+            audioUrl={post.audioUrl}
+            withNames={coAuthorNames || undefined}
+            className="hidden lg:block"
+          />
+        ) : (
+          <div className="hidden lg:block" aria-hidden />
+        )}
+
+        <article className="lg:max-w-3xl">
+          <header>
+            {post.tags?.length ? (
+              <div className="mb-4 flex flex-wrap gap-2">
+                {post.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded-full bg-brand-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-brand-600"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            ) : null}
+
+            <h1 className="text-3xl font-bold leading-tight tracking-tight text-app-title md:text-4xl">
+              {post.title}
+            </h1>
+
+            <div className="mt-5 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-sm">
+              {authors.map((a, i) => (
                 <span
-                  key={tag}
-                  className="rounded-full bg-brand-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-brand-600"
+                  key={`${a.name}-${i}`}
+                  className="inline-flex flex-wrap items-center gap-x-1.5"
                 >
-                  {tag}
+                  {i > 0 ? <span className="text-app-muted">and</span> : null}
+                  <span className="font-semibold text-app-title">{a.name}</span>
+                  {a.credentials ? (
+                    <span className="text-app-muted">· {a.credentials}</span>
+                  ) : null}
+                  {a.role ? <RoleBadge role={a.role} /> : null}
                 </span>
               ))}
             </div>
-          ) : null}
 
-          <h1 className="text-3xl font-bold leading-tight tracking-tight text-app-title md:text-4xl">
-            {post.title}
-          </h1>
-
-          <div className="mt-5 flex items-center gap-3 text-sm text-app-muted">
-            {post.author?.name ? (
-              <span className="font-semibold text-app-text">
-                {byline(post.author.name, post.author.credentials)}
-              </span>
-            ) : null}
-            {post.author?.name && post.publishedAt ? <span>·</span> : null}
-            {post.publishedAt ? (
-              <time dateTime={post.publishedAt}>
-                {formatDate(post.publishedAt)}
-              </time>
-            ) : null}
-          </div>
-        </header>
-
-        {cover ? (
-          <div className="mt-8 overflow-hidden rounded-3xl">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={cover}
-              alt={post.title}
-              width={coverDims?.width}
-              height={coverDims?.height}
-              className="h-auto w-full"
-            />
-          </div>
-        ) : null}
-
-        <div className="mt-4">
-          <PortableBody value={post.body} />
-        </div>
-
-        {post.author?.name ? (
-          <footer className="mt-16 flex items-start gap-5 rounded-[1.75rem] border border-black/5 bg-app-card p-6 shadow-soft-orange sm:p-7">
-            {authorPhoto ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={authorPhoto}
-                alt={post.author.name}
-                className="h-16 w-16 shrink-0 rounded-full object-cover ring-1 ring-black/5"
-              />
-            ) : (
-              <span
-                aria-hidden
-                className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-brand-50 text-xl font-bold text-brand-600 ring-1 ring-black/5"
-              >
-                {authorInitial}
-              </span>
-            )}
-            <div className="min-w-0">
-              <p className="text-[11px] font-black uppercase tracking-[0.2em] text-brand-600">
-                About the author
-              </p>
-              <p className="mt-1.5 text-base font-bold text-app-title">
-                {byline(post.author.name, post.author.credentials)}
-              </p>
-              {post.author.bio ? (
-                <p className="mt-2 text-sm leading-relaxed text-app-muted">
-                  {post.author.bio}
-                </p>
+            <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-app-muted">
+              {post.publishedAt ? (
+                <time dateTime={post.publishedAt}>
+                  {formatDate(post.publishedAt)}
+                </time>
+              ) : null}
+              {post.publishedAt ? <span aria-hidden>·</span> : null}
+              <span>{minutes} min read</span>
+              {peerLabel ? (
+                <>
+                  <span aria-hidden>·</span>
+                  <span>Peer reviewed by {peerLabel}</span>
+                </>
               ) : null}
             </div>
-          </footer>
-        ) : null}
-      </article>
+          </header>
+
+          {cover ? (
+            <div className="mt-8 overflow-hidden rounded-3xl">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={cover}
+                alt={post.title}
+                width={coverDims?.width}
+                height={coverDims?.height}
+                className="h-auto w-full"
+              />
+            </div>
+          ) : null}
+
+          <div className="mt-4">
+            <PortableBody value={post.body} />
+          </div>
+
+          {post.author?.name ? (
+            <footer className="mt-16 flex items-start gap-5 rounded-[1.75rem] border border-black/5 bg-app-card p-6 shadow-soft-orange sm:p-7 lg:hidden">
+              {authorPhoto ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={authorPhoto}
+                  alt={post.author.name}
+                  className="h-16 w-16 shrink-0 rounded-full object-cover ring-1 ring-black/5"
+                />
+              ) : (
+                <span
+                  aria-hidden
+                  className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-brand-50 text-xl font-bold text-brand-600 ring-1 ring-black/5"
+                >
+                  {authorInitial}
+                </span>
+              )}
+              <div className="min-w-0">
+                <p className="text-[11px] font-black uppercase tracking-[0.2em] text-brand-600">
+                  About the author
+                </p>
+                <p className="mt-1.5 text-base font-bold text-app-title">
+                  {post.author.name}
+                </p>
+                {post.author.credentials ? (
+                  <p className="text-sm text-app-muted">
+                    {post.author.credentials}
+                  </p>
+                ) : null}
+                {coAuthorNames ? (
+                  <p className="mt-1 text-sm text-app-muted">with {coAuthorNames}</p>
+                ) : null}
+                {post.author.role ? (
+                  <RoleBadge role={post.author.role} className="mt-2" />
+                ) : null}
+                {post.author.bio ? (
+                  <p className="mt-2 text-sm leading-relaxed text-app-muted">
+                    {post.author.bio}
+                  </p>
+                ) : null}
+                {post.audioUrl ? (
+                  <div className="mt-4">
+                    <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-brand-600">
+                      Listen to this article
+                    </p>
+                    {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+                    <audio
+                      controls
+                      preload="none"
+                      src={post.audioUrl}
+                      className="w-full"
+                    >
+                      Your browser does not support the audio element.
+                    </audio>
+                  </div>
+                ) : null}
+              </div>
+            </footer>
+          ) : null}
+        </article>
+      </div>
     </main>
   );
 }

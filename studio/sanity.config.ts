@@ -11,6 +11,8 @@ import {
   requestChangesAction,
   submitForReviewAction,
 } from "./actions/workflowActions";
+import { presentationTool } from "sanity/presentation";
+import { resolve } from "./presentation/resolve";
 import { speechworksTheme } from "./lib/theme";
 import { StudioIcon } from "./components/Logo";
 
@@ -28,6 +30,17 @@ export default defineConfig({
   theme: speechworksTheme,
   plugins: [
     structureTool({ structure: deskStructure }),
+    presentationTool({
+      resolve,
+      previewUrl: {
+        origin:
+          process.env.SANITY_STUDIO_PREVIEW_URL || "https://blog.speechworks.app",
+        previewMode: {
+          enable: "/api/draft-mode/enable",
+          disable: "/api/draft-mode/disable",
+        },
+      },
+    }),
     visionTool({ defaultApiVersion: "2024-10-01" }),
   ],
   // Hide the Vision (GROQ query) tool from non-editors so authors can't use it to

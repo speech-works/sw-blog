@@ -19,3 +19,13 @@ export const marketingUrl =
 export const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
 
 export const isConfigured = Boolean(projectId);
+
+// Where the Studio is hosted — used by stega so visual-editing overlays know which
+// Studio to deep-link into. Defaults to the hosted Studio.
+export const studioUrl =
+  process.env.NEXT_PUBLIC_SANITY_STUDIO_URL ||
+  "https://speechworks-blog.sanity.studio";
+
+// Server-only read token (NOT prefixed NEXT_PUBLIC_): lets the server fetch
+// unpublished drafts for preview / visual editing.
+export const readToken = process.env.SANITY_API_READ_TOKEN || "";

@@ -10,10 +10,15 @@
   --background: #fffaf5;
   --foreground: #3f332d;
   scroll-behavior: smooth;
+  /* Match sw-landing: anchor links account for the fixed navbar height */
+  scroll-padding-top: var(--nav-height);
 }
 
 html {
   -webkit-text-size-adjust: 100%;
+  /* Match sw-landing: prevent horizontal overflow from content spill */
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 body {
@@ -22,4 +27,13 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  /* Match sw-landing: prevent horizontal overflow */
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+main {
+  /* Match sw-landing */
+  max-width: 100%;
+  overflow-x: clip;
 }
