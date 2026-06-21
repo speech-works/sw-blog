@@ -115,8 +115,10 @@ export const post = defineType({
       title: "Audio narration (link)",
       type: "url",
       group: "content",
+      hidden: ({ parent }) =>
+        Boolean((parent as { audio?: unknown } | undefined)?.audio),
       description:
-        "Optional. Instead of uploading, link to externally-hosted audio. Used only if no file is uploaded above.",
+        "Optional. Instead of uploading, link to externally-hosted audio. Shown only when no file is uploaded above.",
     }),
     defineField({
       name: "tags",

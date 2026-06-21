@@ -20,7 +20,7 @@ export function isEditorUser(
   user: { email?: string | null } | null | undefined,
 ): boolean {
   const email = user?.email?.toLowerCase();
-  return !!email && EDITORS.map((e) => e.toLowerCase()).includes(email);
+  return !!email && EDITORS.includes(email);
 }
 
 // This is UI-level enforcement; hard per-user enforcement needs paid Sanity custom

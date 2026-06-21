@@ -2,7 +2,7 @@ import { PortableText, type PortableTextComponents } from "@portabletext/react";
 import type { PortableTextBlock } from "@portabletext/types";
 import type { SanityImageSource } from "@sanity/image-url";
 import { stegaClean } from "next-sanity";
-import { urlForImage } from "@/lib/sanity.image";
+import { urlForImage, hasAsset, imageDimensions } from "@/lib/sanity.image";
 
 // Hand-mapped to brand tokens (no typography plugin) so long-form posts read like
 // the rest of the site: app-title headings, brand links, warm body text.
@@ -82,7 +82,7 @@ const components: PortableTextComponents = {
       // During live editing an image block can exist before its asset finishes
       // uploading (no `asset` yet). Skip it instead of letting urlForImage throw
       // "Unable to resolve image URL from source".
-      if (!source?.asset) return null;
+      if (!hasAsset(source)) return null;
       // In draft/preview mode, stega injects invisible markers into string fields,
       // so `size` must be cleaned before it's used as a lookup key — otherwise the
       // key won't match and the chosen size has no effect in the preview.
@@ -99,12 +99,15 @@ const components: PortableTextComponents = {
         full: "w-full",
       }[size];
       const url = urlForImage(source).width(cdnWidth).url();
+      const dims = imageDimensions(source);
       return (
         <figure className="mt-8">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={url}
             alt={source.alt || ""}
+            width={dims?.width}
+            height={dims?.height}
             className={`${sizeClass} h-auto rounded-2xl`}
             loading="lazy"
           />

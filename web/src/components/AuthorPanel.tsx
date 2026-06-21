@@ -1,4 +1,5 @@
 import RoleBadge from "./RoleBadge";
+import AudioPlayer from "./AudioPlayer";
 
 type AuthorPanelProps = {
   name: string;
@@ -68,13 +69,7 @@ export default function AuthorPanel({
 
         {audioUrl ? (
           <div className="border-t border-black/5 pt-3">
-            <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-brand-600">
-              Listen
-            </p>
-            {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-            <audio controls preload="none" src={audioUrl} className="w-full">
-              Your browser does not support the audio element.
-            </audio>
+            <AudioPlayer src={audioUrl} />
           </div>
         ) : null}
       </div>

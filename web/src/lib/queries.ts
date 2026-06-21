@@ -5,6 +5,8 @@ import type { Post, PostListItem } from "./types";
 // sanityFetch (Live Content API) serves published content by default and swaps in
 // drafts automatically when Draft Mode is on (via the read token in sanity.live).
 
+// Shared scalar fields. `author` is projected per-query (the list needs less than
+// the detail view), so it is NOT included here to avoid a double projection.
 const listFields = `
   _id,
   title,
@@ -12,12 +14,11 @@ const listFields = `
   excerpt,
   coverImage,
   publishedAt,
-  tags,
-  author->{ name, credentials, role }
+  tags
 `;
 
 const allPostsQuery = `*[_type == "post" && defined(slug.current)]
-  | order(publishedAt desc) { ${listFields} }`;
+  | order(publishedAt desc) { ${listFields}, author->{ name, credentials, role } }`;
 
 const postBySlugQuery = `*[_type == "post" && slug.current == $slug][0]{
   ${listFields},
@@ -30,6 +31,11 @@ const postBySlugQuery = `*[_type == "post" && slug.current == $slug][0]{
 }`;
 
 const slugsQuery = `*[_type == "post" && defined(slug.current)].slug.current`;
+
+// Lean projection for the sitemap (and any slug+date use) — avoids pulling cover
+// images, authors, etc. on a route that doesn't render them.
+const postMetaQuery = `*[_type == "post" && defined(slug.current)]
+  | order(publishedAt desc) { "slug": slug.current, publishedAt }`;
 
 export async function getAllPosts(): Promise<PostListItem[]> {
   if (!isConfigured) return [];
@@ -54,6 +60,23 @@ export async function getPostSlugs(): Promise<string[]> {
     return (data as string[]) ?? [];
   } catch (err) {
     console.error("[sw-blog] getPostSlugs failed:", err);
+    return [];
+  }
+}
+
+export async function getAllPostMeta(): Promise<
+  { slug: string; publishedAt?: string }[]
+> {
+  if (!isConfigured) return [];
+  try {
+    const { data } = await sanityFetch({
+      query: postMetaQuery,
+      perspective: "published",
+      stega: false,
+    });
+    return (data as { slug: string; publishedAt?: string }[]) ?? [];
+  } catch (err) {
+    console.error("[sw-blog] getAllPostMeta failed:", err);
     return [];
   }
 }

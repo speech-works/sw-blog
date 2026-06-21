@@ -1,5 +1,6 @@
 import type { PortableTextBlock } from "@portabletext/types";
 import { stegaClean } from "next-sanity";
+import { ROLE_LABELS } from "./roles";
 
 export function formatDate(value?: string): string {
   if (!value) return "";
@@ -24,14 +25,6 @@ export function joinNames(names: string[]): string {
   if (list.length === 2) return `${list[0]} & ${list[1]}`;
   return `${list.slice(0, -1).join(", ")} & ${list[list.length - 1]}`;
 }
-
-const ROLE_LABELS: Record<string, string> = {
-  pws: "Person who stutters",
-  slp: "Speech-language pathologist",
-  parent: "Parent / caregiver",
-  researcher: "Researcher",
-  ally: "Ally",
-};
 
 // Human-readable badge label for an author's role; "" when unset/unknown so
 // callers can simply render nothing.

@@ -2,25 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPostBySlug, getPostSlugs } from "@/lib/queries";
-import { urlForImage } from "@/lib/sanity.image";
+import { urlForImage, hasAsset, imageDimensions } from "@/lib/sanity.image";
 import { siteUrl, basePath, marketingUrl } from "@/lib/env";
 import { byline, formatDate, joinNames, readingTime } from "@/lib/format";
+import { stegaClean } from "next-sanity";
 import PortableBody from "@/components/PortableBody";
 import AuthorPanel from "@/components/AuthorPanel";
 import RoleBadge from "@/components/RoleBadge";
-
-// A Sanity image asset _ref encodes the original pixel size ("...-1600x1164-jpg").
-// Parsing it lets us set width/height on the <img> so the browser reserves the box
-// before the image loads, preventing the article from shifting down (CLS).
-function imageDimensions(
-  source: unknown,
-): { width: number; height: number } | null {
-  const ref =
-    (source as { asset?: { _ref?: string } } | null)?.asset?._ref ??
-    (source as { _ref?: string } | null)?._ref;
-  const match = /-(\d+)x(\d+)-/.exec(typeof ref === "string" ? ref : "");
-  return match ? { width: Number(match[1]), height: Number(match[2]) } : null;
-}
+import AudioPlayer from "@/components/AudioPlayer";
 
 export const revalidate = 60;
 // Pre-render known slugs at build; render brand-new ones on first request (ISR).
@@ -44,9 +33,10 @@ export async function generateMetadata({
 
   // Use the post's cover when it has one; otherwise fall back to the site's
   // branded OG card so a cover-less post never shares as a blank preview.
-  const ogImage = post.coverImage
-    ? urlForImage(post.coverImage).width(1200).height(630).fit("crop").url()
-    : `${siteUrl}${basePath}/opengraph-image`;
+  const ogImage =
+    post.coverImage && hasAsset(post.coverImage)
+      ? urlForImage(post.coverImage).width(1200).height(630).fit("crop").url()
+      : `${siteUrl}${basePath}/opengraph-image`;
 
   return {
     title: post.title,
@@ -83,15 +73,18 @@ export default async function PostPage({
   if (!post) notFound();
 
   const cover =
-    post.coverImage && (post.coverImage as { asset?: unknown }).asset
-      ? urlForImage(post.coverImage).width(1600).url()
+    post.coverImage && hasAsset(post.coverImage)
+      ? urlForImage(post.coverImage).width(1200).url()
       : null;
-  const coverDims = post.coverImage ? imageDimensions(post.coverImage) : null;
+  const coverDims =
+    post.coverImage && hasAsset(post.coverImage)
+      ? imageDimensions(post.coverImage)
+      : null;
 
   // Author photo is optional: show it when the author has one, otherwise fall back
   // to a brand-tinted initial so the card always looks intentional.
   const authorPhoto =
-    post.author?.photo && (post.author.photo as { asset?: unknown }).asset
+    post.author?.photo && hasAsset(post.author.photo)
       ? urlForImage(post.author.photo).width(160).height(160).fit("crop").url()
       : null;
   const authorInitial =
@@ -192,7 +185,7 @@ export default async function PostPage({
               <div className="mb-4 flex flex-wrap gap-2">
                 {post.tags.map((tag) => (
                   <span
-                    key={tag}
+                    key={stegaClean(tag)}
                     className="rounded-full bg-brand-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-brand-600"
                   >
                     {tag}
@@ -297,18 +290,10 @@ export default async function PostPage({
                 ) : null}
                 {post.audioUrl ? (
                   <div className="mt-4">
-                    <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-brand-600">
-                      Listen to this article
-                    </p>
-                    {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-                    <audio
-                      controls
-                      preload="none"
+                    <AudioPlayer
                       src={post.audioUrl}
-                      className="w-full"
-                    >
-                      Your browser does not support the audio element.
-                    </audio>
+                      label="Listen to this article"
+                    />
                   </div>
                 ) : null}
               </div>

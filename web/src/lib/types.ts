@@ -1,7 +1,8 @@
 import type { PortableTextBlock } from "@portabletext/types";
 import type { SanityImageSource } from "@sanity/image-url";
+import type { AuthorRole } from "./roles";
 
-export type AuthorRole = "pws" | "slp" | "parent" | "researcher" | "ally";
+export type { AuthorRole };
 
 export interface Author {
   name: string;

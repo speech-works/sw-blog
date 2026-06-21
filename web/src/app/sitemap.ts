@@ -1,12 +1,12 @@
 import type { MetadataRoute } from "next";
-import { getAllPosts } from "@/lib/queries";
+import { getAllPostMeta } from "@/lib/queries";
 import { siteUrl, basePath } from "@/lib/env";
 
 export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = `${siteUrl}${basePath}`;
-  const posts = await getAllPosts();
+  const posts = await getAllPostMeta();
 
   const postEntries: MetadataRoute.Sitemap = posts.map((post) => ({
     url: `${base}/${post.slug}`,
