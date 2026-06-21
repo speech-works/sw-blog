@@ -26,7 +26,7 @@ const postBySlugQuery = `*[_type == "post" && slug.current == $slug][0]{
   author->{ name, credentials, photo, bio, role },
   coAuthors[]->{ name, credentials, role },
   peerReviewers[]->{ name, credentials },
-  audioUrl
+  "audioUrl": coalesce(audio.asset->url, audioUrl)
 }`;
 
 const slugsQuery = `*[_type == "post" && defined(slug.current)].slug.current`;

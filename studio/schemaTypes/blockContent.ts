@@ -56,6 +56,21 @@ export const blockContent = defineType({
           title: "Alt text",
           description: "Describe the image for screen readers and SEO.",
         },
+        {
+          name: "size",
+          type: "string",
+          title: "Display size",
+          description: "How wide to show the image in the article.",
+          options: {
+            list: [
+              { title: "Small", value: "small" },
+              { title: "Medium", value: "medium" },
+              { title: "Full width", value: "full" },
+            ],
+            layout: "radio",
+          },
+          initialValue: "full",
+        },
       ],
     }),
   ],

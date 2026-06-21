@@ -102,12 +102,21 @@ export const post = defineType({
       group: "content",
     }),
     defineField({
+      name: "audio",
+      title: "Audio narration (upload)",
+      type: "file",
+      group: "content",
+      options: { accept: "audio/*" },
+      description:
+        "Optional. Upload a recording of this article (e.g. an MP3) to show a “Listen” player. Takes priority over the link below.",
+    }),
+    defineField({
       name: "audioUrl",
-      title: "Audio narration URL",
+      title: "Audio narration (link)",
       type: "url",
       group: "content",
       description:
-        "Optional. Link to an audio narration of this article (e.g. an MP3). Shows a “Listen” player.",
+        "Optional. Instead of uploading, link to externally-hosted audio. Used only if no file is uploaded above.",
     }),
     defineField({
       name: "tags",

@@ -1,4 +1,5 @@
 import type { PortableTextBlock } from "@portabletext/types";
+import { stegaClean } from "next-sanity";
 
 export function formatDate(value?: string): string {
   if (!value) return "";
@@ -35,8 +36,10 @@ const ROLE_LABELS: Record<string, string> = {
 // Human-readable badge label for an author's role; "" when unset/unknown so
 // callers can simply render nothing.
 export function roleLabel(role?: string): string {
-  if (!role) return "";
-  return ROLE_LABELS[role] ?? "";
+  // Clean stega markers (visual-editing draft mode) before using as a lookup key.
+  const cleaned = stegaClean(role);
+  if (!cleaned) return "";
+  return ROLE_LABELS[cleaned] ?? "";
 }
 
 // Rough reading time in minutes from Portable Text, at ~200 words/min. Always

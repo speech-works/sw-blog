@@ -1,6 +1,7 @@
 import { PortableText, type PortableTextComponents } from "@portabletext/react";
 import type { PortableTextBlock } from "@portabletext/types";
 import type { SanityImageSource } from "@sanity/image-url";
+import { stegaClean } from "next-sanity";
 import { urlForImage } from "@/lib/sanity.image";
 
 // Hand-mapped to brand tokens (no typography plugin) so long-form posts read like
@@ -73,15 +74,38 @@ const components: PortableTextComponents = {
   },
   types: {
     image: ({ value }) => {
-      const source = value as SanityImageSource & { alt?: string };
-      const url = urlForImage(source).width(1400).url();
+      const source = value as SanityImageSource & {
+        alt?: string;
+        size?: string;
+        asset?: unknown;
+      };
+      // During live editing an image block can exist before its asset finishes
+      // uploading (no `asset` yet). Skip it instead of letting urlForImage throw
+      // "Unable to resolve image URL from source".
+      if (!source?.asset) return null;
+      // In draft/preview mode, stega injects invisible markers into string fields,
+      // so `size` must be cleaned before it's used as a lookup key — otherwise the
+      // key won't match and the chosen size has no effect in the preview.
+      const cleaned = stegaClean(source.size);
+      const size: "small" | "medium" | "full" =
+        cleaned === "small" || cleaned === "medium" ? cleaned : "full";
+      // Fetch a CDN width that matches the display size (smaller display = smaller
+      // download), and constrain + center small/medium images. Classes are literal
+      // strings so Tailwind picks them up.
+      const cdnWidth = { small: 800, medium: 1100, full: 1400 }[size];
+      const sizeClass = {
+        small: "mx-auto w-full max-w-sm",
+        medium: "mx-auto w-full max-w-xl",
+        full: "w-full",
+      }[size];
+      const url = urlForImage(source).width(cdnWidth).url();
       return (
         <figure className="mt-8">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={url}
             alt={source.alt || ""}
-            className="w-full rounded-2xl"
+            className={`${sizeClass} h-auto rounded-2xl`}
             loading="lazy"
           />
           {source.alt ? (

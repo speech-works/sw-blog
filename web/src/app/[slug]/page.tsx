@@ -82,16 +82,18 @@ export default async function PostPage({
   const post = await getPostBySlug(slug);
   if (!post) notFound();
 
-  const cover = post.coverImage
-    ? urlForImage(post.coverImage).width(1600).url()
-    : null;
+  const cover =
+    post.coverImage && (post.coverImage as { asset?: unknown }).asset
+      ? urlForImage(post.coverImage).width(1600).url()
+      : null;
   const coverDims = post.coverImage ? imageDimensions(post.coverImage) : null;
 
   // Author photo is optional: show it when the author has one, otherwise fall back
   // to a brand-tinted initial so the card always looks intentional.
-  const authorPhoto = post.author?.photo
-    ? urlForImage(post.author.photo).width(160).height(160).fit("crop").url()
-    : null;
+  const authorPhoto =
+    post.author?.photo && (post.author.photo as { asset?: unknown }).asset
+      ? urlForImage(post.author.photo).width(160).height(160).fit("crop").url()
+      : null;
   const authorInitial =
     post.author?.name?.trim().charAt(0).toUpperCase() ?? "";
   const minutes = readingTime(post.body);
