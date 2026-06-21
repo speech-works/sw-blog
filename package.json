@@ -1,0 +1,8 @@
+{
+  "name": "sw-blog",
+  "private": true,
+  "description": "Speechworks blog monorepo — `web` (Next.js) + `studio` (Sanity).",
+  "scripts": {
+    "dev": "node scripts/dev.mjs"
+  }
+}
