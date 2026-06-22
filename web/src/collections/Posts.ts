@@ -2,7 +2,7 @@ import type { CollectionConfig, Where } from "payload";
 import { isLoggedIn, isEditorField, userIsEditor } from "../access/roles";
 import { stampOwner } from "../hooks/stampOwner";
 import { workflowGate } from "../hooks/workflowGate";
-import { formatSlug } from "../hooks/formatSlug";
+import { ensureUniquePost } from "../hooks/uniquePost";
 import { enforceCoAuthorDiscoverability } from "../hooks/coAuthorGate";
 import { previewPath } from "../lib/preview";
 import {
@@ -91,7 +91,7 @@ export const Posts: CollectionConfig = {
     },
   },
   hooks: {
-    beforeValidate: [enforceCoAuthorDiscoverability],
+    beforeValidate: [enforceCoAuthorDiscoverability, ensureUniquePost],
     beforeChange: [stampOwner, workflowGate],
     afterChange: [revalidateAfterChange],
     afterDelete: [revalidateAfterDelete],
@@ -118,10 +118,11 @@ export const Posts: CollectionConfig = {
       required: true,
       unique: true,
       index: true,
-      hooks: { beforeValidate: [formatSlug] },
+      // Slug is auto-filled + made unique by the ensureUniquePost collection hook.
       admin: {
         position: "sidebar",
-        description: "Auto-filled from the title; you can override it.",
+        description:
+          "Auto-filled from the title (kept unique). You can override it.",
       },
     },
     {

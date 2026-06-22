@@ -6,6 +6,21 @@ import { userIsAdmin, userIsEditor } from "../access/roles";
 // bypassed via the API.
 const EDITABLE = ["draft", "changesRequested"];
 
+// Content fields whose change to an already-approved post should force re-review.
+const CONTENT_FIELDS = [
+  "title",
+  "slug",
+  "excerpt",
+  "author",
+  "coAuthors",
+  "peerReviewers",
+  "coverImage",
+  "body",
+  "audio",
+  "audioUrl",
+  "tags",
+];
+
 // Pull a user id out of a relationship value (id, {id}, or {value}).
 const relId = (v: unknown): string | undefined => {
   if (v == null) return undefined;
@@ -32,6 +47,20 @@ export const workflowGate: CollectionBeforeChangeHook = ({
   const orig = (originalDoc ?? {}) as Record<string, unknown>;
 
   const prev = (orig.workflowStatus ?? "draft") as string;
+
+  // Re-review on edit: editing the CONTENT of an already-approved post (a real
+  // document save — not a publish, and not a workflow-button PATCH which only sends
+  // workflowStatus) sends it back to "In review", so the changes get re-checked
+  // before going (or staying) live. Admins are exempt. Authors can't reach this
+  // (they can't edit an approved post), so in practice this targets editors.
+  const isPublishing = d._status === "published";
+  const isContentSave = CONTENT_FIELDS.some((f) => f in d);
+  if (prev === "approved" && isContentSave && !isPublishing && !isAdmin) {
+    d.workflowStatus = "inReview";
+    d.approvedBy = null;
+    d.approvedAt = null;
+  }
+
   const next = (d.workflowStatus ?? prev) as string;
   const stamp = new Date().toISOString();
 

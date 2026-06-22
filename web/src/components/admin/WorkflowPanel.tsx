@@ -119,6 +119,12 @@ export const WorkflowPanel: React.FC = () => {
         </div>
       )}
 
+      {st === "approved" && isEditor && !isPublished && !userIsAdmin(user) && (
+        <span className="sw-wf__muted">
+          Editing the content will send this post back to review.
+        </span>
+      )}
+
       {hasActions &&
         (modified ? (
           <span className="sw-wf__muted">
