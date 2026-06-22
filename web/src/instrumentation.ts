@@ -6,18 +6,23 @@ export async function register() {
   // `instanceof ArrayBuffer` check and rejects SharedArrayBuffer, causing a
   // TypeError when signing S3/R2 upload requests.
   //
-  // Patching Symbol.hasInstance makes SharedArrayBuffer satisfy that check.
-  // It is safe: SharedArrayBuffer has the same binary layout as ArrayBuffer, and
-  // `new Uint8Array(sharedArrayBuffer)` works correctly in Node.js 22.
+  // Patch ArrayBuffer's `instanceof` so SharedArrayBuffer also satisfies it. We
+  // delegate to the ordinary hasInstance algorithm for BOTH constructors so the
+  // behaviour is identical to native `instanceof` (correct null/undefined and
+  // prototype-chain handling) — just also accepting SharedArrayBuffer. This is
+  // safe: SharedArrayBuffer has the same binary layout and `new Uint8Array(sab)`
+  // works in Node.js 22.
   if (typeof SharedArrayBuffer !== "undefined") {
+    const ordinaryHasInstance = Function.prototype[Symbol.hasInstance];
     Object.defineProperty(ArrayBuffer, Symbol.hasInstance, {
       value(instance: unknown): boolean {
         return (
-          Object.getPrototypeOf(instance) === ArrayBuffer.prototype ||
-          Object.getPrototypeOf(instance) === SharedArrayBuffer.prototype
+          ordinaryHasInstance.call(ArrayBuffer, instance) ||
+          ordinaryHasInstance.call(SharedArrayBuffer, instance)
         );
       },
       configurable: true,
+      writable: true,
     });
   }
 }
