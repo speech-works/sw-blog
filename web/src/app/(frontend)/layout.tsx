@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { draftMode } from "next/headers";
 import { VisualEditing } from "next-sanity/visual-editing";
-import "./globals.css";
+import "../globals.css";
 import { siteUrl, basePath } from "@/lib/env";
 import { SiteNavbar, SiteFooter } from "@/components/SiteChrome";
 import { SanityLive } from "@/lib/sanity.live";

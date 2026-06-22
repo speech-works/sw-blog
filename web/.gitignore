@@ -10,3 +10,6 @@
 next-env.d.ts
 .open-next
 *.tsbuildinfo
+
+# Payload local-disk media uploads (production uploads go to Cloudflare R2)
+/media

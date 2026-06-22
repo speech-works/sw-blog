@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withPayload } from "@payloadcms/next/withPayload";
 
 // When the blog is mounted under speechworks.app/blog (Cloudflare routes /blog/*
 // to this app without stripping the prefix), set NEXT_PUBLIC_BASE_PATH=/blog so
@@ -8,6 +9,10 @@ const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
 
 const nextConfig: NextConfig = {
   basePath: basePath || undefined,
+  // Pin the workspace root to this app — a stray lockfile in the home directory
+  // otherwise makes Next/Turbopack infer the wrong root.
+  turbopack: { root: import.meta.dirname },
 };
 
-export default nextConfig;
+// withPayload mounts the admin + API and configures bundling for Payload.
+export default withPayload(nextConfig);
