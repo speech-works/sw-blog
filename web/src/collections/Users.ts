@@ -102,7 +102,15 @@ export const Users: CollectionConfig = {
       ],
       access: {
         read: isAdminField,
-        create: isAdminField,
+        // Admins can set roles. Also permit the very first (bootstrap) account,
+        // which is created while unauthenticated — otherwise the firstUserAdmin
+        // hook's "admin" value gets stripped here. Collection-level create access
+        // is admin-only, so no one else can reach the create path anyway.
+        create: async ({ req }) => {
+          if (userIsAdmin(req.user)) return true;
+          const { totalDocs } = await req.payload.count({ collection: "users" });
+          return totalDocs === 0;
+        },
         update: isAdminField,
       },
       hooks: { beforeChange: [firstUserAdmin] },
