@@ -68,26 +68,23 @@ export const Users: CollectionConfig = {
       type: "select",
       defaultValue: "hidden",
       options: [
-        { label: "Hidden (default)", value: "hidden" },
-        { label: "Discoverable for 1 hour", value: "1hour" },
-        { label: "Discoverable for 8 hours", value: "8hours" },
-        { label: "Always discoverable", value: "always" },
+        { label: "Hidden", value: "hidden" },
+        { label: "1 hour", value: "1hour" },
+        { label: "8 hours", value: "8hours" },
+        { label: "Always", value: "always" },
       ],
-      admin: {
-        description:
-          "Let other authors find you (to add you as a co-author) for a limited time. The window restarts each time you save your profile.",
-      },
+      // Set by the DiscoverabilityControl below; hidden as a raw input.
+      admin: { hidden: true },
     },
     {
       name: "discoverableUntil",
       type: "date",
-      access: { update: () => false }, // system-set from the window above
+      access: { update: () => false }, // system-set from the window via the hook
       admin: {
-        position: "sidebar",
-        readOnly: true,
-        date: { pickerAppearance: "dayAndTime", displayFormat: "d MMM yyyy, h:mm a" },
-        description:
-          "When your discoverability expires — computed from the window on save. No timer runs; it's simply compared to the current time whenever another author looks you up.",
+        // Custom UI: live status line + one-click [Hidden / 1h / 8h / Always] buttons.
+        components: {
+          Field: "/components/admin/DiscoverabilityControl#DiscoverabilityControl",
+        },
       },
     },
 

@@ -136,13 +136,7 @@ export interface User {
   contributorType?: ('pws' | 'slp' | 'parent' | 'researcher' | 'ally') | null;
   bio?: string | null;
   photo?: (number | null) | Media;
-  /**
-   * Let other authors find you (to add you as a co-author) for a limited time. The window restarts each time you save your profile.
-   */
   discoverabilityWindow?: ('hidden' | '1hour' | '8hours' | 'always') | null;
-  /**
-   * When your discoverability expires — computed from the window on save. No timer runs; it's simply compared to the current time whenever another author looks you up.
-   */
   discoverableUntil?: string | null;
   /**
    * What this person is allowed to do. Only an admin can change this.
