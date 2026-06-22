@@ -4,6 +4,7 @@ import { stampOwner } from "../hooks/stampOwner";
 import { workflowGate } from "../hooks/workflowGate";
 import { formatSlug } from "../hooks/formatSlug";
 import { enforceCoAuthorDiscoverability } from "../hooks/coAuthorGate";
+import { previewPath } from "../lib/preview";
 import {
   revalidateAfterChange,
   revalidateAfterDelete,
@@ -33,6 +34,12 @@ export const Posts: CollectionConfig = {
     // also hard-scopes the list, so this is convenience, not the security.)
     baseListFilter: ({ req: { user } }): Where =>
       userIsEditor(user) || !user ? {} : { owner: { equals: user.id } },
+    // Draft preview: a "Preview" button + a side-by-side Live Preview view that
+    // refreshes on save (see components/RefreshOnSave).
+    preview: (doc) => previewPath((doc as { slug?: string }).slug),
+    livePreview: {
+      url: ({ data }) => previewPath((data as { slug?: string })?.slug),
+    },
     components: {
       edit: {
         // Clear workflow buttons next to Save, and a Publish button that's

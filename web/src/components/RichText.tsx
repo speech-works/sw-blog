@@ -72,15 +72,29 @@ const converters: JSXConvertersFunction = ({ defaultConverters }) => ({
   upload: ({ node }) => {
     const value = node.value as Media | number | undefined;
     if (!value || typeof value !== "object" || !value.url) return null;
+    // The author's Small/Medium/Full choice (stored on the upload node).
+    const size = (node as { fields?: { size?: string } }).fields?.size ?? "full";
+    const sizeClass =
+      { small: "mx-auto w-full max-w-sm", medium: "mx-auto w-full max-w-xl", full: "w-full" }[
+        size
+      ] ?? "w-full";
+    // Download a variant matched to the display size.
+    const variant =
+      size === "small"
+        ? value.sizes?.small
+        : size === "medium"
+          ? value.sizes?.medium
+          : value.sizes?.full;
+    const src = variant?.url ?? value.url;
     return (
       <figure className="mt-8">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={value.url}
+          src={src}
           alt={value.alt || ""}
-          width={value.width ?? undefined}
-          height={value.height ?? undefined}
-          className="h-auto w-full rounded-2xl"
+          width={variant?.width ?? value.width ?? undefined}
+          height={variant?.height ?? value.height ?? undefined}
+          className={`${sizeClass} h-auto rounded-2xl`}
           loading="lazy"
         />
         {value.alt ? (

@@ -1,7 +1,7 @@
 import path from "path";
 import { buildConfig } from "payload";
 import { postgresAdapter } from "@payloadcms/db-postgres";
-import { lexicalEditor } from "@payloadcms/richtext-lexical";
+import { lexicalEditor, UploadFeature } from "@payloadcms/richtext-lexical";
 import { s3Storage } from "@payloadcms/storage-s3";
 import sharp from "sharp";
 
@@ -21,9 +21,43 @@ export default buildConfig({
     importMap: { baseDir: path.resolve(process.cwd(), "src") },
     // Use the logged-in user's uploaded Photo for the top-right avatar.
     avatar: { Component: "/components/admin/Avatar#AdminAvatar" },
+    // Speechworks branding: logo on the login/nav, mark in the collapsed nav.
+    components: {
+      graphics: {
+        Logo: "/components/admin/Logo#Logo",
+        Icon: "/components/admin/Icon#Icon",
+      },
+    },
+    meta: {
+      titleSuffix: "— Speechworks Blog",
+    },
   },
   collections: [Users, Posts, Media],
-  editor: lexicalEditor(), // feature config (headings/image block/etc.) added in P5
+  // Keep all default editor features, but give in-text images a Small/Medium/Full
+  // size choice (stored on the upload node, rendered by components/RichText).
+  editor: lexicalEditor({
+    features: ({ defaultFeatures }) => [
+      ...defaultFeatures.filter((f) => f.key !== "upload"),
+      UploadFeature({
+        collections: {
+          media: {
+            fields: [
+              {
+                name: "size",
+                type: "select",
+                defaultValue: "full",
+                options: [
+                  { label: "Small", value: "small" },
+                  { label: "Medium", value: "medium" },
+                  { label: "Full width", value: "full" },
+                ],
+              },
+            ],
+          },
+        },
+      }),
+    ],
+  }),
   secret: process.env.PAYLOAD_SECRET || "",
   db: postgresAdapter({
     pool: { connectionString: process.env.DATABASE_URI || "" },

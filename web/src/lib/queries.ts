@@ -1,66 +1,7 @@
 import { getPayloadClient, dbConfigured } from "./payload";
-import type { Author, Post, PostListItem } from "./types";
-import type { Post as PayloadPost, User } from "@/payload-types";
-
-// --- adapters: Payload docs -> the lightweight shapes the UI renders ---
-
-// A populated user becomes the public byline; its `contributorType` becomes the
-// public `role` badge.
-function toAuthor(u: number | User | null | undefined): Author | undefined {
-  if (!u || typeof u !== "object") return undefined;
-  return {
-    name: u.name,
-    credentials: u.credentials ?? undefined,
-    role: (u.contributorType ?? undefined) as Author["role"],
-    photo: u.photo,
-    bio: u.bio ?? undefined,
-  };
-}
-
-function toAuthors(
-  list: (number | User)[] | null | undefined,
-): Pick<Author, "name" | "credentials" | "role">[] {
-  return (list ?? [])
-    .filter((u): u is User => Boolean(u) && typeof u === "object")
-    .map((u) => ({
-      name: u.name,
-      credentials: u.credentials ?? undefined,
-      role: (u.contributorType ?? undefined) as Author["role"],
-    }));
-}
-
-function toListItem(doc: PayloadPost): PostListItem {
-  const a = toAuthor(doc.author);
-  return {
-    id: doc.id,
-    title: doc.title,
-    slug: doc.slug,
-    excerpt: doc.excerpt ?? undefined,
-    coverImage: doc.coverImage,
-    publishedAt: doc.publishedAt ?? undefined,
-    tags: doc.tags ?? undefined,
-    author: a
-      ? { name: a.name, credentials: a.credentials, role: a.role }
-      : undefined,
-  };
-}
-
-function toPost(doc: PayloadPost): Post {
-  const uploaded =
-    doc.audio && typeof doc.audio === "object" ? doc.audio.url : undefined;
-  return {
-    ...toListItem(doc),
-    body: doc.body,
-    updatedAt: doc.updatedAt ?? undefined,
-    author: toAuthor(doc.author),
-    coAuthors: toAuthors(doc.coAuthors),
-    peerReviewers: toAuthors(doc.peerReviewers).map(({ name, credentials }) => ({
-      name,
-      credentials,
-    })),
-    audioUrl: uploaded ?? doc.audioUrl ?? undefined,
-  };
-}
+import { toListItem, toPost } from "./adapt";
+import type { Post, PostListItem } from "./types";
+import type { Post as PayloadPost } from "@/payload-types";
 
 const PUBLISHED = { _status: { equals: "published" } } as const;
 
@@ -82,22 +23,38 @@ export async function getAllPosts(): Promise<PostListItem[]> {
   }
 }
 
-export async function getPostBySlug(slug: string): Promise<Post | null> {
+// Raw post document (used by the live-preview component, which needs the Payload
+// shape to merge with live editor data). In preview it returns the latest draft.
+export async function getPostDoc(
+  slug: string,
+  opts: { draft?: boolean } = {},
+): Promise<PayloadPost | null> {
   if (!dbConfigured()) return null;
+  const draft = Boolean(opts.draft);
   try {
     const payload = await getPayloadClient();
     const res = await payload.find({
       collection: "posts",
-      where: { and: [{ slug: { equals: slug } }, PUBLISHED] },
+      where: draft
+        ? { slug: { equals: slug } }
+        : { and: [{ slug: { equals: slug } }, PUBLISHED] },
+      draft,
       depth: 2, // populate author.photo, cover, co-authors, peer reviewers, body images
       limit: 1,
     });
-    const doc = res.docs[0];
-    return doc ? toPost(doc) : null;
+    return res.docs[0] ?? null;
   } catch (err) {
-    console.error("[sw-blog] getPostBySlug failed:", err);
+    console.error("[sw-blog] getPostDoc failed:", err);
     return null;
   }
+}
+
+export async function getPostBySlug(
+  slug: string,
+  opts: { draft?: boolean } = {},
+): Promise<Post | null> {
+  const doc = await getPostDoc(slug, opts);
+  return doc ? toPost(doc) : null;
 }
 
 export async function getPostSlugs(): Promise<string[]> {

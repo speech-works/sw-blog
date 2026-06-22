@@ -1,11 +1,7 @@
 import type { Metadata } from "next";
-import { draftMode } from "next/headers";
-import { VisualEditing } from "next-sanity/visual-editing";
 import "../globals.css";
 import { siteUrl, basePath } from "@/lib/env";
 import { SiteNavbar, SiteFooter } from "@/components/SiteChrome";
-import { SanityLive } from "@/lib/sanity.live";
-import DisableDraftMode from "@/components/DisableDraftMode";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -18,10 +14,9 @@ export const metadata: Metadata = {
   alternates: { canonical: `${basePath || ""}/` },
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const { isEnabled: isDraft } = await draftMode();
   return (
     <html lang="en" className="scroll-smooth">
       <head>
@@ -47,13 +42,6 @@ export default async function RootLayout({
           </div>
           <SiteFooter />
         </div>
-        <SanityLive />
-        {isDraft ? (
-          <>
-            <VisualEditing />
-            <DisableDraftMode />
-          </>
-        ) : null}
       </body>
     </html>
   );
