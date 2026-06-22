@@ -42,9 +42,10 @@ export const Posts: CollectionConfig = {
     },
     components: {
       edit: {
-        // Clear workflow buttons next to Save, and a Publish button that's
-        // locked until an editor is viewing an approved post.
-        beforeDocumentControls: ["/components/admin/WorkflowActions#WorkflowActions"],
+        // Publish button locked until an editor is viewing an approved post.
+        // (The status + workflow actions live in the WorkflowPanel ui field below,
+        // so they get a full-width, mobile-friendly card instead of crowding the
+        // Save/Publish toolbar.)
         PublishButton: "/components/admin/GatedPublishButton#GatedPublishButton",
       },
     },
@@ -96,6 +97,15 @@ export const Posts: CollectionConfig = {
     afterDelete: [revalidateAfterDelete],
   },
   fields: [
+    // Full-width review-status card + workflow actions (Submit / Approve / Request
+    // changes), rendered at the top of the post.
+    {
+      name: "reviewStatus",
+      type: "ui",
+      admin: {
+        components: { Field: "/components/admin/WorkflowPanel#WorkflowPanel" },
+      },
+    },
     {
       name: "title",
       type: "text",

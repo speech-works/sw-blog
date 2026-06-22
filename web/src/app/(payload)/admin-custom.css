@@ -19,3 +19,130 @@
 [data-theme="dark"] .sw-admin-icon {
   filter: brightness(0) invert(1);
 }
+
+/* tone accent per workflow stage (shared by the panel + notifications) */
+.sw-tone-draft {
+  --sw-accent: var(--theme-elevation-400, #9ca3af);
+}
+.sw-tone-review {
+  --sw-accent: var(--theme-warning-500, #d9822b);
+}
+.sw-tone-changes {
+  --sw-accent: var(--theme-error-500, #e11d48);
+}
+.sw-tone-approved,
+.sw-tone-published {
+  --sw-accent: var(--theme-success-500, #21a67a);
+}
+
+/* --- Review-status panel (top of a post) --- */
+.sw-wf {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 18px;
+  margin: 0 0 22px;
+  border: 1px solid var(--theme-elevation-150, rgba(128, 128, 128, 0.2));
+  border-left: 4px solid var(--sw-accent, var(--theme-elevation-300));
+  border-radius: 6px;
+  background: var(--theme-elevation-50, rgba(128, 128, 128, 0.04));
+}
+.sw-wf__label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--theme-elevation-450, #888);
+}
+.sw-wf__status {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--theme-text);
+}
+.sw-wf__dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--sw-accent, var(--theme-elevation-400));
+  flex: none;
+}
+.sw-wf__note {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 5px;
+  background: var(--theme-elevation-100, rgba(128, 128, 128, 0.08));
+  border: 1px solid var(--theme-warning-500, #d9822b);
+  color: var(--theme-text);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.sw-wf__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.sw-wf__muted {
+  font-size: 13px;
+  color: var(--theme-elevation-450, #888);
+}
+.sw-wf__input {
+  padding: 7px 10px;
+  min-width: 180px;
+  flex: 1 1 180px;
+  border: 1px solid var(--theme-elevation-200, rgba(128, 128, 128, 0.3));
+  border-radius: 4px;
+  background: var(--theme-input-bg, var(--theme-elevation-0, transparent));
+  color: var(--theme-text);
+}
+
+/* --- Dashboard notifications (login-time review queue) --- */
+.sw-notif {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0 0 30px;
+}
+.sw-notif__title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--theme-elevation-450, #888);
+}
+.sw-notif__row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border: 1px solid var(--theme-elevation-150, rgba(128, 128, 128, 0.2));
+  border-left: 4px solid var(--sw-accent, var(--theme-elevation-300));
+  border-radius: 6px;
+  background: var(--theme-elevation-50, rgba(128, 128, 128, 0.04));
+}
+.sw-notif__head {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--theme-text);
+}
+.sw-notif__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+}
+.sw-notif__links a {
+  font-size: 13px;
+  color: var(--theme-text);
+  opacity: 0.75;
+}
+.sw-notif__links a:hover {
+  opacity: 1;
+}
+.sw-notif__ok {
+  font-size: 13px;
+  color: var(--theme-elevation-450, #888);
+}

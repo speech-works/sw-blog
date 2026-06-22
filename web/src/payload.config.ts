@@ -27,6 +27,8 @@ export default buildConfig({
         Logo: "/components/admin/Logo#Logo",
         Icon: "/components/admin/Icon#Icon",
       },
+      // Login-time "review queue" on the dashboard.
+      beforeDashboard: ["/components/admin/Notifications#Notifications"],
     },
     meta: {
       titleSuffix: "— Speechworks Blog",
