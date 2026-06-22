@@ -101,7 +101,11 @@ export const Users: CollectionConfig = {
         { label: "Reviewer (SLP peer reviewer)", value: "reviewer" },
       ],
       access: {
-        read: isAdminField,
+        // Readable by anyone who can read the user record (collection-level read
+        // already limits WHICH users that is). This must stay open: the admin UI
+        // reads the logged-in user's OWN roles to decide which workflow buttons to
+        // show — if it were admin-only, editors couldn't see their own "editor"
+        // role and lost the Approve/Publish buttons. Only an admin can CHANGE roles.
         create: isAdminField,
         update: isAdminField,
       },
