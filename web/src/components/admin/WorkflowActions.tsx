@@ -8,7 +8,19 @@ import {
   useFormModified,
 } from "@payloadcms/ui";
 import type { User } from "../../payload-types";
-import { userIsEditor } from "../../access/roles";
+import { userIsAdmin, userIsEditor } from "../../access/roles";
+
+// Pull a user id out of a relationship form value (id, {id}, or {value}).
+const rid = (v: unknown): string | undefined => {
+  if (v == null) return undefined;
+  if (typeof v === "object") {
+    const o = v as { id?: unknown; value?: unknown };
+    if (o.id != null) return String(o.id);
+    if (o.value != null) return String(o.value);
+    return undefined;
+  }
+  return String(v);
+};
 
 // A clear status chip (so authors can ALWAYS see where their post stands — the
 // built-in "Status: Draft" only means "not yet published") plus the role-aware
@@ -33,6 +45,8 @@ export const WorkflowActions: React.FC = () => {
   const isPublished =
     useFormFields(([fields]) => fields?._status?.value as string | undefined) ===
     "published";
+  const authorVal = useFormFields(([fields]) => fields?.author?.value);
+  const coAuthorsVal = useFormFields(([fields]) => fields?.coAuthors?.value);
   const modified = useFormModified();
   const [busy, setBusy] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
@@ -42,8 +56,25 @@ export const WorkflowActions: React.FC = () => {
 
   const isEditor = userIsEditor(user);
   const st = (status ?? "draft") as string;
+
+  // Independent review: an editor who is an author/co-author can't approve their own
+  // post (admins are exempt). The server enforces this too; here we hide Approve and
+  // explain why.
+  const myId = user?.id != null ? String(user.id) : undefined;
+  const contributorIds = new Set<string>();
+  const aId = rid(authorVal);
+  if (aId) contributorIds.add(aId);
+  if (Array.isArray(coAuthorsVal)) {
+    for (const c of coAuthorsVal) {
+      const x = rid(c);
+      if (x) contributorIds.add(x);
+    }
+  }
+  const recused =
+    isEditor && !userIsAdmin(user) && Boolean(myId && contributorIds.has(myId));
+
   const showSubmit = st === "draft" || st === "changesRequested";
-  const showApprove = isEditor && st === "inReview";
+  const showApprove = isEditor && st === "inReview" && !recused;
   const showRequest = isEditor && (st === "inReview" || st === "approved");
 
   const patch = async (data: Record<string, unknown>) => {
@@ -123,6 +154,12 @@ export const WorkflowActions: React.FC = () => {
             >
               Approve
             </Button>
+          )}
+          {st === "inReview" && recused && (
+            <span style={{ fontSize: 13, fontWeight: 600, color: "#f59e0b" }}>
+              ⚠️ You&rsquo;re an author/co-author — another editor or an admin must
+              approve this.
+            </span>
           )}
           {showRequest && !noteOpen && (
             <Button
