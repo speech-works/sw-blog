@@ -136,6 +136,12 @@ export const Posts: CollectionConfig = {
       type: "relationship",
       relationTo: "users",
       hasMany: true,
+      // The picker shows only addable people: an author can pick discoverable users;
+      // editors can pick anyone. (The coAuthorGate hook enforces the same server-side.)
+      filterOptions: ({ user }): boolean | Where =>
+        userIsEditor(user)
+          ? true
+          : { discoverableUntil: { greater_than: new Date().toISOString() } },
       admin: { description: "Shown in the byline alongside the main author." },
     },
     {
@@ -143,7 +149,16 @@ export const Posts: CollectionConfig = {
       type: "relationship",
       relationTo: "users",
       hasMany: true,
-      filterOptions: () => ({ contributorType: { equals: "slp" } }),
+      // SLPs only; an author is further limited to discoverable ones (editors: any).
+      filterOptions: ({ user }): Where =>
+        userIsEditor(user)
+          ? { contributorType: { equals: "slp" } }
+          : {
+              and: [
+                { contributorType: { equals: "slp" } },
+                { discoverableUntil: { greater_than: new Date().toISOString() } },
+              ],
+            },
       admin: {
         description: 'SLPs who peer-reviewed this (shown as "Peer reviewed by …").',
       },

@@ -20,16 +20,19 @@ export const Users: CollectionConfig = {
     group: "People",
   },
   access: {
-    // Editors/admins see everyone. An author sees ONLY their own profile PLUS
-    // anyone who has switched themselves "discoverable" (so they can be picked
-    // as a co-author). Everyone else is hidden. The public byline is fetched
-    // server-side via the Local API, which bypasses this.
+    // Editors/admins see everyone. An author sees: their own profile; anyone who's
+    // currently "discoverable" (so they can be picked as a co-author); AND all
+    // editors/admins (so the names of whoever submitted/reviewed/approved/published
+    // their post resolve, instead of showing "Untitled - ID: N"). Other authors stay
+    // hidden. The public byline is fetched server-side via the Local API, which
+    // bypasses this.
     read: ({ req: { user } }) => {
       if (userIsEditor(user)) return true;
       if (!user) return false;
       const clauses: Where[] = [
         { id: { equals: user.id } },
         { discoverableUntil: { greater_than: new Date().toISOString() } },
+        { roles: { in: ["admin", "editor"] } },
       ];
       return { or: clauses };
     },
