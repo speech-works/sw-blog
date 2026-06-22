@@ -157,7 +157,10 @@ export const workflowGate: CollectionBeforeChangeHook = ({
 
   // 5) Audit trail (system-only fields, set here on each transition).
   if (next !== prev) {
-    if (next === "inReview") {
+    // Only a DELIBERATE submit (from draft/changesRequested) records the submitter.
+    // The approved -> inReview auto re-review must NOT overwrite the original
+    // author's submission with the editor who edited.
+    if (next === "inReview" && prev !== "approved") {
       d.submittedBy = user?.id;
       d.submittedAt = stamp;
     }
