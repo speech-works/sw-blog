@@ -17,12 +17,17 @@ const WORKFLOW_OPTIONS = [
   { label: "Approved", value: "approved" },
 ];
 
-// System-only audit fields share this shape: nobody can hand-edit them; the
-// workflowGate hook fills them in. Shown read-only in the sidebar.
-const systemOnly = {
+// System-only audit fields: nobody can hand-edit them (the workflowGate hook fills
+// them in), and each is shown read-only in the sidebar ONLY once it has a value — so
+// an empty one never looks like a field you can select/pick manually.
+const auditField = (name: string) => ({
   access: { update: () => false },
-  admin: { position: "sidebar" as const, readOnly: true },
-};
+  admin: {
+    position: "sidebar" as const,
+    readOnly: true,
+    condition: (data: Record<string, unknown>) => Boolean(data?.[name]),
+  },
+});
 
 export const Posts: CollectionConfig = {
   slug: "posts",
@@ -233,8 +238,9 @@ export const Posts: CollectionConfig = {
       access: { update: isEditorField },
       admin: {
         position: "sidebar",
-        description:
-          "Editor's note when requesting changes — the author can read this.",
+        readOnly: true, // set via the "Request changes" button, not typed here
+        condition: (data: Record<string, unknown>) => Boolean(data?.reviewNotes),
+        description: "Editor's note when requesting changes — the author can read this.",
       },
     },
     // owner: system-only anchor for the "own posts only" rule.
@@ -248,12 +254,12 @@ export const Posts: CollectionConfig = {
     // audit trail (system-only — written by the workflowGate hook).
     // The publish *date* reuses the editorial `publishedAt` above; here we record
     // who submitted/approved/published it.
-    { name: "submittedBy", type: "relationship", relationTo: "users", ...systemOnly },
-    { name: "submittedAt", type: "date", ...systemOnly },
-    { name: "changesRequestedBy", type: "relationship", relationTo: "users", ...systemOnly },
-    { name: "changesRequestedAt", type: "date", ...systemOnly },
-    { name: "approvedBy", type: "relationship", relationTo: "users", ...systemOnly },
-    { name: "approvedAt", type: "date", ...systemOnly },
-    { name: "publishedBy", type: "relationship", relationTo: "users", ...systemOnly },
+    { name: "submittedBy", type: "relationship", relationTo: "users", ...auditField("submittedBy") },
+    { name: "submittedAt", type: "date", ...auditField("submittedAt") },
+    { name: "changesRequestedBy", type: "relationship", relationTo: "users", ...auditField("changesRequestedBy") },
+    { name: "changesRequestedAt", type: "date", ...auditField("changesRequestedAt") },
+    { name: "approvedBy", type: "relationship", relationTo: "users", ...auditField("approvedBy") },
+    { name: "approvedAt", type: "date", ...auditField("approvedAt") },
+    { name: "publishedBy", type: "relationship", relationTo: "users", ...auditField("publishedBy") },
   ],
 };
