@@ -39,12 +39,28 @@ export const workflowGate: CollectionBeforeChangeHook = ({
   data,
   req,
   originalDoc,
+  operation,
 }) => {
   const user = req.user;
   const isAdmin = userIsAdmin(user);
   const isEditor = userIsEditor(user);
   const d = data as Record<string, unknown>;
   const orig = (originalDoc ?? {}) as Record<string, unknown>;
+
+  // Every new post starts as a fresh draft. This matters for DUPLICATE, which copies
+  // all fields from the source — without this, duplicating an approved/published post
+  // would create a copy that's already approved/published (skipping review) and carry
+  // the original's stale audit stamps. A normal "Create New" is already a draft, so
+  // this is a no-op there.
+  if (operation === "create") {
+    d.workflowStatus = "draft";
+    d._status = "draft";
+    d.submittedBy = null;
+    d.submittedAt = null;
+    d.approvedBy = null;
+    d.approvedAt = null;
+    d.publishedBy = null;
+  }
 
   const prev = (orig.workflowStatus ?? "draft") as string;
 

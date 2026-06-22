@@ -15,6 +15,10 @@ export const ALWAYS_DISCOVERABLE = "9999-12-31T00:00:00.000Z";
 
 export const computeDiscoverability: CollectionBeforeChangeHook = ({ data }) => {
   const d = data as Record<string, unknown>;
+  // Only recompute the expiry when the window is actually part of this update.
+  // Otherwise a partial update that omits discoverabilityWindow (e.g. a programmatic
+  // "set roles" call) would wrongly wipe discoverableUntil and hide the user.
+  if (!("discoverabilityWindow" in d)) return data;
   const window = d.discoverabilityWindow as string | undefined;
   if (window === "1hour") {
     d.discoverableUntil = new Date(Date.now() + HOUR_MS).toISOString();
