@@ -12,16 +12,6 @@ const nextConfig: NextConfig = {
   // Pin the workspace root to this app — a stray lockfile in the home directory
   // otherwise makes Next/Turbopack infer the wrong root.
   turbopack: { root: import.meta.dirname },
-  // Keep the AWS SDK and its smithy dependencies out of the Next/webpack bundle.
-  // When bundled, the V8 buffer internals change and AWS SDK signature-v4 receives
-  // a SharedArrayBuffer instead of ArrayBuffer, causing a TypeError on R2 uploads.
-  // Running them as native Node modules (external) avoids the transformation.
-  serverExternalPackages: [
-    "@aws-sdk/client-s3",
-    "@smithy/core",
-    "@smithy/signature-v4",
-    "@smithy/middleware-serde",
-  ],
 };
 
 // withPayload mounts the admin + API and configures bundling for Payload.
