@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { draftMode } from "next/headers";
+import { draftMode, headers } from "next/headers";
 import { getPostBySlug, getPostDoc, getPostSlugs } from "@/lib/queries";
+import { getPayloadClient } from "@/lib/payload";
 import { resolveImage } from "@/lib/media";
 import { siteUrl, basePath, marketingUrl } from "@/lib/env";
 import PostArticle from "@/components/PostArticle";
@@ -26,8 +27,9 @@ export async function generateMetadata({
   params: Promise<Params>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const { isEnabled: isDraft } = await draftMode();
-  const post = await getPostBySlug(slug, { draft: isDraft });
+  // Metadata always reflects the published post (preview tab titles don't matter
+  // and a draft fetch here would need the viewer's session).
+  const post = await getPostBySlug(slug);
   if (!post) return { title: "Post not found" };
 
   // Use the post's cover when it has one; otherwise fall back to the site's
@@ -82,8 +84,17 @@ export default async function PostPage({
   const { isEnabled: isDraft } = await draftMode();
 
   // Preview: render the realtime client article (updates as you type, no DB hit).
+  // Resolve the logged-in user so the draft fetch enforces access — an author
+  // only ever sees their own drafts (an editor sees all). Not logged in → 404.
   if (isDraft) {
-    const doc = await getPostDoc(slug, { draft: true });
+    const payload = await getPayloadClient();
+    let user = null;
+    try {
+      ({ user } = await payload.auth({ headers: (await headers()) as unknown as Headers }));
+    } catch {
+      // not authenticated → treated as no access below
+    }
+    const doc = user ? await getPostDoc(slug, { draft: true, user }) : null;
     if (!doc) notFound();
     return (
       <main className="relative mx-auto max-w-3xl px-5 pt-12 sm:px-6 lg:max-w-6xl">

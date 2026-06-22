@@ -3,8 +3,13 @@
 # functions instead of being deployed as static files.
 [build]
   base = "web"
-  command = "npm run build"
+  # Run DB migrations first (applies any pending schema changes to Neon),
+  # then build the Next.js app.
+  command = "npm run payload -- migrate && npm run build"
   publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"

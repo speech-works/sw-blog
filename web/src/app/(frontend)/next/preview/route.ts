@@ -1,20 +1,29 @@
 import { draftMode } from "next/headers";
 import { redirect } from "next/navigation";
-import { PREVIEW_SECRET } from "@/lib/preview";
+import { getPayloadClient } from "@/lib/payload";
 
-// Enables Next draft mode (so pages fetch unpublished drafts) after verifying the
-// secret, then redirects to the post. Called by the admin Preview button + the
-// Live Preview iframe.
+// Turns on Next draft mode (so pages can fetch unpublished drafts) — but ONLY for a
+// logged-in Payload user. There is no secret in the URL to leak: access is gated by
+// the admin session cookie, which is always present because previews are launched
+// from /admin. WHICH drafts a viewer sees is then enforced by the page's
+// access-respecting fetch, so an author can only ever preview their OWN drafts.
+// Called by the admin Preview button + the Live Preview iframe.
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const secret = searchParams.get("previewSecret");
   const path = searchParams.get("path") || "/";
-
-  if (secret !== PREVIEW_SECRET) {
-    return new Response("Invalid preview secret.", { status: 401 });
-  }
   if (!path.startsWith("/")) {
     return new Response("Invalid preview path.", { status: 400 });
+  }
+
+  const payload = await getPayloadClient();
+  let user = null;
+  try {
+    ({ user } = await payload.auth({ headers: request.headers }));
+  } catch {
+    // fall through to the 401 below
+  }
+  if (!user) {
+    return new Response("Sign in at /admin to preview drafts.", { status: 401 });
   }
 
   const dm = await draftMode();

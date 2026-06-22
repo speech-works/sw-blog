@@ -1,7 +1,7 @@
 import { getPayloadClient, dbConfigured } from "./payload";
 import { toListItem, toPost } from "./adapt";
 import type { Post, PostListItem } from "./types";
-import type { Post as PayloadPost } from "@/payload-types";
+import type { Post as PayloadPost, User } from "@/payload-types";
 
 const PUBLISHED = { _status: { equals: "published" } } as const;
 
@@ -25,9 +25,11 @@ export async function getAllPosts(): Promise<PostListItem[]> {
 
 // Raw post document (used by the live-preview component, which needs the Payload
 // shape to merge with live editor data). In preview it returns the latest draft.
+// Pass `user` for draft reads so access is enforced — an author only ever sees
+// their OWN drafts (an editor sees all); public reads stay published-only.
 export async function getPostDoc(
   slug: string,
-  opts: { draft?: boolean } = {},
+  opts: { draft?: boolean; user?: User | null } = {},
 ): Promise<PayloadPost | null> {
   if (!dbConfigured()) return null;
   const draft = Boolean(opts.draft);
@@ -39,6 +41,10 @@ export async function getPostDoc(
         ? { slug: { equals: slug } }
         : { and: [{ slug: { equals: slug } }, PUBLISHED] },
       draft,
+      // Public reads bypass access (already filtered to published). Draft previews
+      // RESPECT the viewer's access, so authors can't preview each other's drafts.
+      overrideAccess: !draft,
+      user: opts.user ?? undefined,
       depth: 2, // populate author.photo, cover, co-authors, peer reviewers, body images
       limit: 1,
     });
