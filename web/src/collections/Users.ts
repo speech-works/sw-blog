@@ -85,7 +85,9 @@ export const Users: CollectionConfig = {
       admin: {
         position: "sidebar",
         readOnly: true,
-        description: "When your discoverability expires (set automatically).",
+        date: { pickerAppearance: "dayAndTime", displayFormat: "d MMM yyyy, h:mm a" },
+        description:
+          "When your discoverability expires — computed from the window on save. No timer runs; it's simply compared to the current time whenever another author looks you up.",
       },
     },
 

@@ -129,7 +129,7 @@ export default async function BlogIndexPage() {
       ) : (
         <div className="mt-14 grid grid-cols-1 gap-7 sm:grid-cols-2 lg:grid-cols-3">
           {posts.map((post) => (
-            <PostCard key={post._id} post={post} />
+            <PostCard key={post.id} post={post} />
           ))}
         </div>
       )}

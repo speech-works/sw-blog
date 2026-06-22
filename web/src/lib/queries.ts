@@ -1,63 +1,117 @@
-import { sanityFetch } from "./sanity.live";
-import { isConfigured } from "./env";
-import type { Post, PostListItem } from "./types";
+import { getPayloadClient, dbConfigured } from "./payload";
+import type { Author, Post, PostListItem } from "./types";
+import type { Post as PayloadPost, User } from "@/payload-types";
 
-// sanityFetch (Live Content API) serves published content by default and swaps in
-// drafts automatically when Draft Mode is on (via the read token in sanity.live).
+// --- adapters: Payload docs -> the lightweight shapes the UI renders ---
 
-// Shared scalar fields. `author` is projected per-query (the list needs less than
-// the detail view), so it is NOT included here to avoid a double projection.
-const listFields = `
-  _id,
-  title,
-  "slug": slug.current,
-  excerpt,
-  coverImage,
-  publishedAt,
-  tags
-`;
+// A populated user becomes the public byline; its `contributorType` becomes the
+// public `role` badge.
+function toAuthor(u: number | User | null | undefined): Author | undefined {
+  if (!u || typeof u !== "object") return undefined;
+  return {
+    name: u.name,
+    credentials: u.credentials ?? undefined,
+    role: (u.contributorType ?? undefined) as Author["role"],
+    photo: u.photo,
+    bio: u.bio ?? undefined,
+  };
+}
 
-const allPostsQuery = `*[_type == "post" && defined(slug.current)]
-  | order(publishedAt desc) { ${listFields}, author->{ name, credentials, role } }`;
+function toAuthors(
+  list: (number | User)[] | null | undefined,
+): Pick<Author, "name" | "credentials" | "role">[] {
+  return (list ?? [])
+    .filter((u): u is User => Boolean(u) && typeof u === "object")
+    .map((u) => ({
+      name: u.name,
+      credentials: u.credentials ?? undefined,
+      role: (u.contributorType ?? undefined) as Author["role"],
+    }));
+}
 
-const postBySlugQuery = `*[_type == "post" && slug.current == $slug][0]{
-  ${listFields},
-  body,
-  _updatedAt,
-  author->{ name, credentials, photo, bio, role },
-  coAuthors[]->{ name, credentials, role },
-  peerReviewers[]->{ name, credentials },
-  "audioUrl": coalesce(audio.asset->url, audioUrl)
-}`;
+function toListItem(doc: PayloadPost): PostListItem {
+  const a = toAuthor(doc.author);
+  return {
+    id: doc.id,
+    title: doc.title,
+    slug: doc.slug,
+    excerpt: doc.excerpt ?? undefined,
+    coverImage: doc.coverImage,
+    publishedAt: doc.publishedAt ?? undefined,
+    tags: doc.tags ?? undefined,
+    author: a
+      ? { name: a.name, credentials: a.credentials, role: a.role }
+      : undefined,
+  };
+}
 
-const slugsQuery = `*[_type == "post" && defined(slug.current)].slug.current`;
+function toPost(doc: PayloadPost): Post {
+  const uploaded =
+    doc.audio && typeof doc.audio === "object" ? doc.audio.url : undefined;
+  return {
+    ...toListItem(doc),
+    body: doc.body,
+    updatedAt: doc.updatedAt ?? undefined,
+    author: toAuthor(doc.author),
+    coAuthors: toAuthors(doc.coAuthors),
+    peerReviewers: toAuthors(doc.peerReviewers).map(({ name, credentials }) => ({
+      name,
+      credentials,
+    })),
+    audioUrl: uploaded ?? doc.audioUrl ?? undefined,
+  };
+}
 
-// Lean projection for the sitemap (and any slug+date use) — avoids pulling cover
-// images, authors, etc. on a route that doesn't render them.
-const postMetaQuery = `*[_type == "post" && defined(slug.current)]
-  | order(publishedAt desc) { "slug": slug.current, publishedAt }`;
+const PUBLISHED = { _status: { equals: "published" } } as const;
 
 export async function getAllPosts(): Promise<PostListItem[]> {
-  if (!isConfigured) return [];
+  if (!dbConfigured()) return [];
   try {
-    const { data } = await sanityFetch({ query: allPostsQuery });
-    return (data as PostListItem[]) ?? [];
+    const payload = await getPayloadClient();
+    const res = await payload.find({
+      collection: "posts",
+      where: PUBLISHED,
+      sort: "-publishedAt",
+      depth: 1,
+      limit: 100,
+    });
+    return res.docs.map(toListItem);
   } catch (err) {
     console.error("[sw-blog] getAllPosts failed:", err);
     return [];
   }
 }
 
-export async function getPostSlugs(): Promise<string[]> {
-  if (!isConfigured) return [];
+export async function getPostBySlug(slug: string): Promise<Post | null> {
+  if (!dbConfigured()) return null;
   try {
-    // Build-time: force published + no stega (these power generateStaticParams).
-    const { data } = await sanityFetch({
-      query: slugsQuery,
-      perspective: "published",
-      stega: false,
+    const payload = await getPayloadClient();
+    const res = await payload.find({
+      collection: "posts",
+      where: { and: [{ slug: { equals: slug } }, PUBLISHED] },
+      depth: 2, // populate author.photo, cover, co-authors, peer reviewers, body images
+      limit: 1,
     });
-    return (data as string[]) ?? [];
+    const doc = res.docs[0];
+    return doc ? toPost(doc) : null;
+  } catch (err) {
+    console.error("[sw-blog] getPostBySlug failed:", err);
+    return null;
+  }
+}
+
+export async function getPostSlugs(): Promise<string[]> {
+  if (!dbConfigured()) return [];
+  try {
+    const payload = await getPayloadClient();
+    const res = await payload.find({
+      collection: "posts",
+      where: PUBLISHED,
+      depth: 0,
+      limit: 1000,
+      pagination: false,
+    });
+    return res.docs.map((d) => d.slug).filter(Boolean);
   } catch (err) {
     console.error("[sw-blog] getPostSlugs failed:", err);
     return [];
@@ -67,35 +121,23 @@ export async function getPostSlugs(): Promise<string[]> {
 export async function getAllPostMeta(): Promise<
   { slug: string; publishedAt?: string }[]
 > {
-  if (!isConfigured) return [];
+  if (!dbConfigured()) return [];
   try {
-    const { data } = await sanityFetch({
-      query: postMetaQuery,
-      perspective: "published",
-      stega: false,
+    const payload = await getPayloadClient();
+    const res = await payload.find({
+      collection: "posts",
+      where: PUBLISHED,
+      sort: "-publishedAt",
+      depth: 0,
+      limit: 1000,
+      pagination: false,
     });
-    return (data as { slug: string; publishedAt?: string }[]) ?? [];
+    return res.docs.map((d) => ({
+      slug: d.slug,
+      publishedAt: d.publishedAt ?? undefined,
+    }));
   } catch (err) {
     console.error("[sw-blog] getAllPostMeta failed:", err);
     return [];
-  }
-}
-
-export async function getPostBySlug(
-  slug: string,
-  { stega = true }: { stega?: boolean } = {},
-): Promise<Post | null> {
-  if (!isConfigured) return null;
-  try {
-    // stega is disabled for metadata so encoded markers never leak into <title>.
-    const { data } = await sanityFetch({
-      query: postBySlugQuery,
-      params: { slug },
-      stega,
-    });
-    return (data as Post) ?? null;
-  } catch (err) {
-    console.error("[sw-blog] getPostBySlug failed:", err);
-    return null;
   }
 }

@@ -2,11 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPostBySlug, getPostSlugs } from "@/lib/queries";
-import { urlForImage, hasAsset, imageDimensions } from "@/lib/sanity.image";
+import { resolveImage } from "@/lib/media";
 import { siteUrl, basePath, marketingUrl } from "@/lib/env";
 import { byline, formatDate, joinNames, readingTime } from "@/lib/format";
-import { stegaClean } from "next-sanity";
-import PortableBody from "@/components/PortableBody";
+import RichText from "@/components/RichText";
 import AuthorPanel from "@/components/AuthorPanel";
 import RoleBadge from "@/components/RoleBadge";
 import AudioPlayer from "@/components/AudioPlayer";
@@ -28,15 +27,14 @@ export async function generateMetadata({
   params: Promise<Params>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const post = await getPostBySlug(slug, { stega: false });
+  const post = await getPostBySlug(slug);
   if (!post) return { title: "Post not found" };
 
   // Use the post's cover when it has one; otherwise fall back to the site's
   // branded OG card so a cover-less post never shares as a blank preview.
   const ogImage =
-    post.coverImage && hasAsset(post.coverImage)
-      ? urlForImage(post.coverImage).width(1200).height(630).fit("crop").url()
-      : `${siteUrl}${basePath}/opengraph-image`;
+    resolveImage(post.coverImage, "og")?.url ??
+    `${siteUrl}${basePath}/opengraph-image`;
 
   return {
     title: post.title,
@@ -49,7 +47,7 @@ export async function generateMetadata({
       description: post.excerpt,
       type: "article",
       publishedTime: post.publishedAt,
-      modifiedTime: post._updatedAt,
+      modifiedTime: post.updatedAt,
       authors: post.author?.name ? [post.author.name] : undefined,
       tags: post.tags,
       images: [{ url: ogImage, width: 1200, height: 630 }],
@@ -72,21 +70,12 @@ export default async function PostPage({
   const post = await getPostBySlug(slug);
   if (!post) notFound();
 
-  const cover =
-    post.coverImage && hasAsset(post.coverImage)
-      ? urlForImage(post.coverImage).width(1200).url()
-      : null;
-  const coverDims =
-    post.coverImage && hasAsset(post.coverImage)
-      ? imageDimensions(post.coverImage)
-      : null;
+  const cover = resolveImage(post.coverImage, "cover");
+  const coverDims = cover ? { width: cover.width, height: cover.height } : null;
 
   // Author photo is optional: show it when the author has one, otherwise fall back
   // to a brand-tinted initial so the card always looks intentional.
-  const authorPhoto =
-    post.author?.photo && hasAsset(post.author.photo)
-      ? urlForImage(post.author.photo).width(160).height(160).fit("crop").url()
-      : null;
+  const authorPhoto = resolveImage(post.author?.photo, "avatar")?.url ?? null;
   const authorInitial =
     post.author?.name?.trim().charAt(0).toUpperCase() ?? "";
   const minutes = readingTime(post.body);
@@ -118,9 +107,9 @@ export default async function PostPage({
         "@id": `${postUrl}#article`,
         headline: post.title,
         ...(post.excerpt ? { description: post.excerpt } : {}),
-        ...(cover ? { image: cover } : {}),
+        ...(cover ? { image: cover.url } : {}),
         ...(post.publishedAt ? { datePublished: post.publishedAt } : {}),
-        dateModified: post._updatedAt ?? post.publishedAt,
+        dateModified: post.updatedAt ?? post.publishedAt,
         ...(post.author?.name
           ? { author: { "@type": "Person", name: post.author.name } }
           : {}),
@@ -185,7 +174,7 @@ export default async function PostPage({
               <div className="mb-4 flex flex-wrap gap-2">
                 {post.tags.map((tag) => (
                   <span
-                    key={stegaClean(tag)}
+                    key={tag}
                     className="rounded-full bg-brand-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-brand-600"
                   >
                     {tag}
@@ -235,7 +224,7 @@ export default async function PostPage({
             <div className="mt-8 overflow-hidden rounded-3xl">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={cover}
+                src={cover.url}
                 alt={post.title}
                 width={coverDims?.width}
                 height={coverDims?.height}
@@ -245,7 +234,7 @@ export default async function PostPage({
           ) : null}
 
           <div className="mt-4">
-            <PortableBody value={post.body} />
+            <RichText data={post.body} />
           </div>
 
           {post.author?.name ? (

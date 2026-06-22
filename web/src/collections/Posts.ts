@@ -33,6 +33,14 @@ export const Posts: CollectionConfig = {
     // also hard-scopes the list, so this is convenience, not the security.)
     baseListFilter: ({ req: { user } }): Where =>
       userIsEditor(user) || !user ? {} : { owner: { equals: user.id } },
+    components: {
+      edit: {
+        // Clear workflow buttons next to Save, and a Publish button that's
+        // locked until an editor is viewing an approved post.
+        beforeDocumentControls: ["/components/admin/WorkflowActions#WorkflowActions"],
+        PublishButton: "/components/admin/GatedPublishButton#GatedPublishButton",
+      },
+    },
   },
   // Native draft/published switch (the publish gate). maxPerDoc caps version
   // history so heavy editing can't balloon the database.
@@ -65,11 +73,13 @@ export const Posts: CollectionConfig = {
       if (!user) return false;
       return { owner: { equals: user.id } };
     },
-    // Keep drafts out of the version/diff viewer for non-owners.
+    // Keep drafts out of the version/diff viewer for non-owners. In version
+    // records the document fields are nested under `version.`, so we filter on
+    // `version.owner` (querying plain `owner` here throws).
     readVersions: ({ req: { user } }) => {
       if (userIsEditor(user)) return true;
       if (!user) return false;
-      return { owner: { equals: user.id } };
+      return { "version.owner": { equals: user.id } } as Where;
     },
   },
   hooks: {
@@ -177,8 +187,8 @@ export const Posts: CollectionConfig = {
       required: true,
       admin: {
         position: "sidebar",
-        description:
-          "The review stage. (In P4 this becomes button-driven; transitions are always enforced server-side.)",
+        readOnly: true, // changed via the workflow buttons, not by hand
+        description: "The review stage — use the buttons above the editor to change it.",
       },
     },
     {

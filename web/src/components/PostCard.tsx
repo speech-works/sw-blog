@@ -1,14 +1,11 @@
 import Link from "next/link";
 import type { PostListItem } from "@/lib/types";
-import { urlForImage } from "@/lib/sanity.image";
+import { resolveImage } from "@/lib/media";
 import { byline, formatDate } from "@/lib/format";
-import { stegaClean } from "next-sanity";
 import RoleBadge from "./RoleBadge";
 
 export default function PostCard({ post }: { post: PostListItem }) {
-  const cover = post.coverImage
-    ? urlForImage(post.coverImage).width(800).height(480).fit("crop").url()
-    : null;
+  const cover = resolveImage(post.coverImage, "card")?.url ?? null;
 
   return (
     <Link
@@ -34,7 +31,7 @@ export default function PostCard({ post }: { post: PostListItem }) {
           <div className="mb-3 flex flex-wrap gap-2">
             {post.tags.slice(0, 2).map((tag) => (
               <span
-                key={stegaClean(tag)}
+                key={tag}
                 className="rounded-full bg-brand-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-brand-600"
               >
                 {tag}

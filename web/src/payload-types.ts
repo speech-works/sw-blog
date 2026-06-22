@@ -141,7 +141,7 @@ export interface User {
    */
   discoverabilityWindow?: ('hidden' | '1hour' | '8hours' | 'always') | null;
   /**
-   * When your discoverability expires (set automatically).
+   * When your discoverability expires — computed from the window on save. No timer runs; it's simply compared to the current time whenever another author looks you up.
    */
   discoverableUntil?: string | null;
   /**
@@ -298,7 +298,7 @@ export interface Post {
   tags?: string[] | null;
   publishedAt?: string | null;
   /**
-   * The review stage. (In P4 this becomes button-driven; transitions are always enforced server-side.)
+   * The review stage — use the buttons above the editor to change it.
    */
   workflowStatus: 'draft' | 'inReview' | 'changesRequested' | 'approved';
   /**
