@@ -50,8 +50,12 @@ export const workflowGate: CollectionBeforeChangeHook = ({
   // Every new post starts as a fresh draft. This matters for DUPLICATE, which copies
   // all fields from the source — without this, duplicating an approved/published post
   // would create a copy that's already approved/published (skipping review) and carry
-  // the original's stale audit stamps. A normal "Create New" is already a draft, so
-  // this is a no-op there.
+  // the original's stale audit stamps. A normal "Create New" is already a draft.
+  //
+  // We then RETURN immediately: on create the post is, by definition, a brand-new
+  // draft, so none of the transition/publish gates below apply. (They must be skipped
+  // — Duplicate passes the source's status as the "previous" value, which would
+  // otherwise make the non-editor transition gate reject the copy.)
   if (operation === "create") {
     d.workflowStatus = "draft";
     d._status = "draft";
@@ -64,6 +68,7 @@ export const workflowGate: CollectionBeforeChangeHook = ({
     d.approvedBy = null;
     d.approvedAt = null;
     d.publishedBy = null;
+    return data;
   }
 
   const prev = (orig.workflowStatus ?? "draft") as string;
