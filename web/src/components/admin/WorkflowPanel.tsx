@@ -22,16 +22,6 @@ const rid = (v: unknown): string | undefined => {
   return String(v);
 };
 
-const STATUS: Record<string, { label: string; tone: string }> = {
-  draft: { label: "Draft — not yet submitted for review", tone: "draft" },
-  inReview: { label: "In review — waiting for an editor", tone: "review" },
-  changesRequested: {
-    label: "Changes requested — address the notes below, then resubmit",
-    tone: "changes",
-  },
-  approved: { label: "Approved — ready for an editor to publish", tone: "approved" },
-};
-
 // The review-status panel at the top of a post: a clear, full-width card showing the
 // current stage plus the role-aware workflow actions. It lives in the main column (a
 // `ui` field) so it never crowds the Save/Publish toolbar and wraps cleanly on
@@ -106,6 +96,7 @@ export const WorkflowPanel: React.FC = () => {
   // Only the post's OWNER submits it for review — a reviewing editor/admin who
   // isn't the owner never sees "Submit for review".
   const isOwner = Boolean(myId && rid(ownerVal) === myId);
+  const isRequester = Boolean(myId && rid(changesByVal) === myId);
   const showSubmit = isOwner && (st === "draft" || st === "changesRequested");
   const showApprove = isEditor && st === "inReview" && !recused;
   const showRequest = isEditor && (st === "inReview" || st === "approved");
@@ -131,9 +122,38 @@ export const WorkflowPanel: React.FC = () => {
     }
   };
 
-  const meta = isPublished
-    ? { label: "Published — live on the blog", tone: "published" }
-    : (STATUS[st] ?? STATUS.draft);
+  // Perspective-aware status line — what it says depends on who's looking.
+  const meta = ((): { label: string; tone: string } => {
+    if (isPublished)
+      return { tone: "published", label: "Published — live on the blog" };
+    switch (st) {
+      case "inReview":
+        return {
+          tone: "review",
+          label: recused
+            ? "In review — waiting for another editor to approve"
+            : isEditor
+              ? "In review — ready for your review"
+              : "In review — waiting for an editor",
+        };
+      case "changesRequested":
+        return {
+          tone: "changes",
+          label: isOwner
+            ? "Changes requested — address the notes below, then resubmit"
+            : "Changes requested — waiting for the author to resubmit",
+        };
+      case "approved":
+        return {
+          tone: "approved",
+          label: isEditor
+            ? "Approved — ready to publish"
+            : "Approved — waiting to be published",
+        };
+      default:
+        return { tone: "draft", label: "Draft — not yet submitted for review" };
+    }
+  })();
 
   return (
     <div className={`sw-wf sw-tone-${meta.tone}`}>
@@ -153,13 +173,15 @@ export const WorkflowPanel: React.FC = () => {
         </div>
       )}
 
-      {st === "changesRequested" && (reviewNotes || requesterName) && (
+      {st === "changesRequested" && (
         <div className="sw-wf__note">
           <span aria-hidden>📝</span>
           <span>
-            {requesterName
-              ? `Changes requested by ${requesterName}`
-              : "Changes requested"}
+            {isRequester
+              ? "You requested changes"
+              : requesterName
+                ? `Changes requested by ${requesterName}`
+                : "Changes requested"}
             {reviewNotes ? `: ${reviewNotes}` : ""}
           </span>
         </div>
