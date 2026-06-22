@@ -1,0 +1,21 @@
+/* Custom admin styling, loaded globally via (payload)/layout.tsx. */
+
+/* Brand logo + icon sizing. The marketing soundwave mark is 3:2, so width is
+   auto to avoid squishing it into a square. */
+.sw-admin-logo {
+  height: 52px;
+  width: auto;
+  object-fit: contain;
+}
+.sw-admin-icon {
+  height: 28px;
+  width: auto;
+  object-fit: contain;
+}
+
+/* The mark is a single dark colour. In dark mode, recolour it to white so it's
+   visible on the dark chrome; in light mode the original brown stays. */
+[data-theme="dark"] .sw-admin-logo,
+[data-theme="dark"] .sw-admin-icon {
+  filter: brightness(0) invert(1);
+}
