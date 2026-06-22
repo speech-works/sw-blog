@@ -1,6 +1,6 @@
 // Central, reusable permission checks. ONE source of truth for "who is an
-// admin / editor / reviewer", used by both collection access and field access.
-// (Replaces Sanity's email allow-list and the duplicated owner/permission logic.)
+// admin / editor / reviewer", used by both collection access and field access —
+// real per-user roles enforced on every request, not a soft allow-list.
 import type { Access, FieldAccess } from "payload";
 import type { User } from "../payload-types";
 

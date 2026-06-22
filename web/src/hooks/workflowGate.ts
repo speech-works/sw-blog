@@ -3,7 +3,7 @@ import { userIsEditor } from "../access/roles";
 
 // The server-side enforcement of the approval workflow. This runs on every
 // save and is the REAL gate (the admin buttons are just convenient triggers).
-// It cannot be bypassed via the API, unlike Sanity's UI-only checks.
+// It cannot be bypassed via the API — the admin buttons are just triggers.
 const EDITABLE = ["draft", "changesRequested"];
 
 export const workflowGate: CollectionBeforeChangeHook = ({

@@ -1,10 +1,6 @@
-// Single source of truth for author roles WITHIN the web app (the `AuthorRole` type
-// and the badge labels both derive from this one list).
-//
-// NOTE: this must stay in sync with the `role` enum in
-// studio/schemaTypes/author.ts — they're separate builds, so it can't be imported
-// directly across the two. The durable fix is Sanity TypeGen (generate web types
-// from the schema); tracked as a separate task.
+// Single source of truth for contributor types (the public "who is speaking"
+// badge). The `AuthorRole` type, the badge labels, and the Payload Users
+// `contributorType` field options all derive from this one list.
 export const AUTHOR_ROLES = [
   { value: "pws", title: "Person who stutters" },
   { value: "slp", title: "Speech-language pathologist" },

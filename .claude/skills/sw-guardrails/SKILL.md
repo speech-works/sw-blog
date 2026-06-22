@@ -289,7 +289,7 @@ Apply A1–A2 to code as strictly as to copy — names ship as product.
   the prompt and any rubric/grading schema.
 - **Copy embedded in code** (button labels, toasts, empty states, errors): run
   through sections A–D. A toast "Great — no stutters detected!" is a 🔴.
-- **Schema field names / enums** (e.g. Sanity post tags, content types): tags
+- **Schema field names / enums** (e.g. post tags, content types): tags
   like `cure`, `fluency-hacks` are 🟡; prefer `acceptance`, `disclosure`,
   `voluntary-stuttering`, `avoidance`, `lived-experience`.
 

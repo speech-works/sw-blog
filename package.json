@@ -1,8 +1,9 @@
 {
   "name": "sw-blog",
   "private": true,
-  "description": "Speechworks blog monorepo — `web` (Next.js) + `studio` (Sanity).",
+  "description": "Speechworks blog — a Next.js app with Payload CMS built in (admin at /admin).",
   "scripts": {
-    "dev": "node scripts/dev.mjs"
+    "dev": "cd web && npm run dev",
+    "build": "cd web && npm run build"
   }
 }
