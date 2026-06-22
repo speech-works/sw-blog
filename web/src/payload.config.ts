@@ -30,6 +30,7 @@ export default buildConfig({
     },
     meta: {
       titleSuffix: "— Speechworks Blog",
+      icons: [{ rel: "icon", type: "image/x-icon", url: "/favicon.ico" }],
     },
   },
   collections: [Users, Posts, Media],
