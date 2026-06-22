@@ -11,7 +11,8 @@ export const stampOwner: CollectionBeforeChangeHook = ({
 }) => {
   if (operation === "create" && req.user) {
     const d = data as Record<string, unknown>;
-    if (d.owner == null) d.owner = req.user.id;
+    // Always the creator — even for Duplicate, which copies the source's owner.
+    d.owner = req.user.id;
   }
   return data;
 };

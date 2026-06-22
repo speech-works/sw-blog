@@ -55,8 +55,12 @@ export const workflowGate: CollectionBeforeChangeHook = ({
   if (operation === "create") {
     d.workflowStatus = "draft";
     d._status = "draft";
+    d.publishedAt = null;
+    d.reviewNotes = null;
     d.submittedBy = null;
     d.submittedAt = null;
+    d.changesRequestedBy = null;
+    d.changesRequestedAt = null;
     d.approvedBy = null;
     d.approvedAt = null;
     d.publishedBy = null;
@@ -166,10 +170,14 @@ export const workflowGate: CollectionBeforeChangeHook = ({
       d.changesRequestedAt = stamp;
     }
   }
-  // First publish: record who published it (the date lives in the editorial
-  // `publishedAt`, which already defaults to "now" on create).
+  // First publish: record who published it AND stamp the public "published date" to
+  // now — unless an editor set a custom (e.g. back-dated) date. This is the real
+  // publish moment, not the draft's creation date.
   if (d._status === "published" && orig._status !== "published") {
     d.publishedBy = user?.id;
+    if (d.publishedAt == null && orig.publishedAt == null) {
+      d.publishedAt = stamp;
+    }
   }
 
   return data;

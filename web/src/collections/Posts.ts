@@ -194,8 +194,11 @@ export const Posts: CollectionConfig = {
     {
       name: "publishedAt",
       type: "date",
-      defaultValue: () => new Date().toISOString(),
-      admin: { position: "sidebar" },
+      admin: {
+        position: "sidebar",
+        description:
+          "Set automatically when the post is first published. Override to back-date.",
+      },
     },
     {
       name: "workflowStatus",
