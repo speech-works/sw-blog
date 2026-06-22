@@ -136,6 +136,21 @@ export const workflowGate: CollectionBeforeChangeHook = ({
     }
   }
 
+  // 4b) Submit-for-review is owner-only: a reviewing editor/admin who isn't the
+  //     owner can't submit someone else's post. Scoped to the EXPLICIT submit
+  //     request (draft/changesRequested -> inReview) so it never blocks the
+  //     approved -> inReview auto re-review. Admins are exempt.
+  const askedSubmit = d.workflowStatus === "inReview" && EDITABLE.includes(prev);
+  if (askedSubmit && !isAdmin) {
+    const ownerId = relId(orig.owner) ?? relId(d.owner);
+    if (user?.id != null && ownerId && String(user.id) !== ownerId) {
+      throw new APIError(
+        "Only the post's owner can submit it for review.",
+        403,
+      );
+    }
+  }
+
   // 5) Audit trail (system-only fields, set here on each transition).
   if (next !== prev) {
     if (next === "inReview") {
@@ -145,6 +160,10 @@ export const workflowGate: CollectionBeforeChangeHook = ({
     if (next === "approved") {
       d.approvedBy = user?.id;
       d.approvedAt = stamp;
+    }
+    if (next === "changesRequested") {
+      d.changesRequestedBy = user?.id;
+      d.changesRequestedAt = stamp;
     }
   }
   // First publish: record who published it (the date lives in the editorial

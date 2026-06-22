@@ -1,5 +1,6 @@
 import type { CollectionConfig } from "payload";
 import { isLoggedIn } from "../access/roles";
+import { protectMediaInUse } from "../hooks/protectMediaInUse";
 
 // One uploads collection for BOTH images and voice clips. Files live on
 // Cloudflare R2 in production (configured in payload.config.ts when R2 env is
@@ -15,6 +16,9 @@ export const Media: CollectionConfig = {
     delete: isLoggedIn,
   },
   admin: { group: "Content" },
+  // Block deleting a file that's still used by a post (cover/audio/in-text) or a
+  // user's avatar — applies to everyone, admins included.
+  hooks: { beforeDelete: [protectMediaInUse] },
   upload: {
     mimeTypes: ["image/*", "audio/*"],
     focalPoint: true,

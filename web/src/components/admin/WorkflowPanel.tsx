@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Button,
   useAuth,
@@ -47,10 +47,41 @@ export const WorkflowPanel: React.FC = () => {
     useFormFields(([f]) => f?._status?.value as string | undefined) === "published";
   const authorVal = useFormFields(([f]) => f?.author?.value);
   const coAuthorsVal = useFormFields(([f]) => f?.coAuthors?.value);
+  const ownerVal = useFormFields(([f]) => f?.owner?.value);
+  const reviewNotes = useFormFields(
+    ([f]) => f?.reviewNotes?.value as string | undefined,
+  );
+  const changesByVal = useFormFields(([f]) => f?.changesRequestedBy?.value);
   const modified = useFormModified();
   const [busy, setBusy] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
   const [note, setNote] = useState("");
+  const [requesterName, setRequesterName] = useState<string | null>(null);
+
+  // Resolve the name of whoever requested changes (the form only holds the id).
+  useEffect(() => {
+    const uid = rid(changesByVal);
+    if (status !== "changesRequested" || !uid) {
+      setRequesterName(null);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch(`/api/users/${uid}?depth=0`, {
+          credentials: "include",
+        });
+        if (!res.ok) return;
+        const json = await res.json();
+        if (!cancelled) setRequesterName((json?.name as string) ?? null);
+      } catch {
+        /* leave name null — the copy degrades gracefully */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [changesByVal, status]);
 
   if (!id) return null; // new, unsaved doc — nothing to track yet
 
@@ -72,7 +103,10 @@ export const WorkflowPanel: React.FC = () => {
   const recused =
     isEditor && !userIsAdmin(user) && Boolean(myId && contributors.has(myId));
 
-  const showSubmit = st === "draft" || st === "changesRequested";
+  // Only the post's OWNER submits it for review — a reviewing editor/admin who
+  // isn't the owner never sees "Submit for review".
+  const isOwner = Boolean(myId && rid(ownerVal) === myId);
+  const showSubmit = isOwner && (st === "draft" || st === "changesRequested");
   const showApprove = isEditor && st === "inReview" && !recused;
   const showRequest = isEditor && (st === "inReview" || st === "approved");
   const hasActions = showSubmit || showApprove || showRequest;
@@ -115,6 +149,18 @@ export const WorkflowPanel: React.FC = () => {
           <span>
             You&rsquo;re an author or co-author of this post, so you can&rsquo;t
             approve it. Another editor or an admin must approve it.
+          </span>
+        </div>
+      )}
+
+      {st === "changesRequested" && (reviewNotes || requesterName) && (
+        <div className="sw-wf__note">
+          <span aria-hidden>📝</span>
+          <span>
+            {requesterName
+              ? `Changes requested by ${requesterName}`
+              : "Changes requested"}
+            {reviewNotes ? `: ${reviewNotes}` : ""}
           </span>
         </div>
       )}

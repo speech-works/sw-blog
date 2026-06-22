@@ -232,6 +232,8 @@ export const Posts: CollectionConfig = {
     // who submitted/approved/published it.
     { name: "submittedBy", type: "relationship", relationTo: "users", ...systemOnly },
     { name: "submittedAt", type: "date", ...systemOnly },
+    { name: "changesRequestedBy", type: "relationship", relationTo: "users", ...systemOnly },
+    { name: "changesRequestedAt", type: "date", ...systemOnly },
     { name: "approvedBy", type: "relationship", relationTo: "users", ...systemOnly },
     { name: "approvedAt", type: "date", ...systemOnly },
     { name: "publishedBy", type: "relationship", relationTo: "users", ...systemOnly },

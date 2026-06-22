@@ -249,7 +249,7 @@ export interface Post {
   id: number;
   title: string;
   /**
-   * Auto-filled from the title; you can override it.
+   * Auto-filled from the title (kept unique). You can override it.
    */
   slug: string;
   author: number | User;
@@ -302,6 +302,8 @@ export interface Post {
   owner?: (number | null) | User;
   submittedBy?: (number | null) | User;
   submittedAt?: string | null;
+  changesRequestedBy?: (number | null) | User;
+  changesRequestedAt?: string | null;
   approvedBy?: (number | null) | User;
   approvedAt?: string | null;
   publishedBy?: (number | null) | User;
@@ -439,6 +441,8 @@ export interface PostsSelect<T extends boolean = true> {
   owner?: T;
   submittedBy?: T;
   submittedAt?: T;
+  changesRequestedBy?: T;
+  changesRequestedAt?: T;
   approvedBy?: T;
   approvedAt?: T;
   publishedBy?: T;
