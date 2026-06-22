@@ -8,6 +8,7 @@ import sharp from "sharp";
 import { Users } from "./collections/Users";
 import { Posts } from "./collections/Posts";
 import { Media } from "./collections/Media";
+import { AuditLog } from "./collections/AuditLog";
 
 // Media uploads go to Cloudflare R2 (S3-compatible) only when its env vars are
 // present. This keeps the database (Neon) the ONLY thing required to boot the
@@ -35,7 +36,7 @@ export default buildConfig({
       icons: [{ rel: "icon", type: "image/x-icon", url: "/favicon.ico" }],
     },
   },
-  collections: [Users, Posts, Media],
+  collections: [Users, Posts, Media, AuditLog],
   // Keep all default editor features, but give in-text images a Small/Medium/Full
   // size choice (stored on the upload node, rendered by components/RichText).
   editor: lexicalEditor({

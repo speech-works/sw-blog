@@ -9,6 +9,7 @@ import {
   revalidateAfterChange,
   revalidateAfterDelete,
 } from "../hooks/revalidate";
+import { auditPostsChange, auditPostsDelete } from "../hooks/audit";
 
 const WORKFLOW_OPTIONS = [
   { label: "Draft", value: "draft" },
@@ -26,6 +27,22 @@ const auditField = (name: string) => ({
     position: "sidebar" as const,
     readOnly: true,
     condition: (data: Record<string, unknown>) => Boolean(data?.[name]),
+  },
+});
+
+// Show date AND time on timestamp fields (the stored value already has both).
+const DATE_TIME = {
+  pickerAppearance: "dayAndTime" as const,
+  displayFormat: "d MMM yyyy, h:mm a",
+};
+// Audit date field: same as auditField, but rendered with the time of day.
+const auditDate = (name: string) => ({
+  access: { update: () => false },
+  admin: {
+    position: "sidebar" as const,
+    readOnly: true,
+    condition: (data: Record<string, unknown>) => Boolean(data?.[name]),
+    date: DATE_TIME,
   },
 });
 
@@ -98,8 +115,8 @@ export const Posts: CollectionConfig = {
   hooks: {
     beforeValidate: [enforceCoAuthorDiscoverability, ensureUniquePost],
     beforeChange: [stampOwner, workflowGate],
-    afterChange: [revalidateAfterChange],
-    afterDelete: [revalidateAfterDelete],
+    afterChange: [revalidateAfterChange, auditPostsChange],
+    afterDelete: [revalidateAfterDelete, auditPostsDelete],
   },
   fields: [
     // Full-width review-status card + workflow actions (Submit / Approve / Request
@@ -216,6 +233,7 @@ export const Posts: CollectionConfig = {
       type: "date",
       admin: {
         position: "sidebar",
+        date: DATE_TIME,
         description:
           "Set automatically when the post is first published. Override to back-date.",
       },
@@ -255,11 +273,11 @@ export const Posts: CollectionConfig = {
     // The publish *date* reuses the editorial `publishedAt` above; here we record
     // who submitted/approved/published it.
     { name: "submittedBy", type: "relationship", relationTo: "users", ...auditField("submittedBy") },
-    { name: "submittedAt", type: "date", ...auditField("submittedAt") },
+    { name: "submittedAt", type: "date", ...auditDate("submittedAt") },
     { name: "changesRequestedBy", type: "relationship", relationTo: "users", ...auditField("changesRequestedBy") },
-    { name: "changesRequestedAt", type: "date", ...auditField("changesRequestedAt") },
+    { name: "changesRequestedAt", type: "date", ...auditDate("changesRequestedAt") },
     { name: "approvedBy", type: "relationship", relationTo: "users", ...auditField("approvedBy") },
-    { name: "approvedAt", type: "date", ...auditField("approvedAt") },
+    { name: "approvedAt", type: "date", ...auditDate("approvedAt") },
     { name: "publishedBy", type: "relationship", relationTo: "users", ...auditField("publishedBy") },
   ],
 };
