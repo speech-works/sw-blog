@@ -20,6 +20,20 @@ const smtpEnabled = Boolean(
   process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS,
 );
 
+if (!smtpEnabled && process.env.NODE_ENV === "production") {
+  throw new Error(
+    "SMTP email is not configured. Set SMTP_HOST, SMTP_USER, and SMTP_PASS so auth emails can be delivered.",
+  );
+}
+
+if (smtpEnabled) {
+  console.info(
+    `[sw-blog] SMTP email enabled via ${process.env.SMTP_HOST} as ${
+      process.env.EMAIL_FROM_ADDRESS || "no-reply@speechworks.app"
+    }`,
+  );
+}
+
 export default buildConfig({
   email: smtpEnabled
     ? nodemailerAdapter({
