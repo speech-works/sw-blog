@@ -1,6 +1,7 @@
 import type { CollectionConfig } from "payload";
-import { isLoggedIn } from "../access/roles";
+import { isLoggedIn, userIsAdmin, userIsEditor } from "../access/roles";
 import { protectMediaInUse } from "../hooks/protectMediaInUse";
+import { stampOwner } from "../hooks/stampOwner";
 import { auditMediaDelete } from "../hooks/audit";
 
 // One uploads collection for BOTH images and voice clips. Files live on
@@ -11,15 +12,29 @@ import { auditMediaDelete } from "../hooks/audit";
 export const Media: CollectionConfig = {
   slug: "media",
   access: {
-    read: () => true, // blog media is public
+    // Anonymous reads must stay open — the public blog serves these images, and
+    // those requests have no user. Editors/admins manage the whole library (and
+    // need to browse it to attach images to posts). A plain author sees only the
+    // files they uploaded.
+    read: ({ req: { user } }) => {
+      if (!user) return true;
+      if (userIsEditor(user)) return true;
+      return { owner: { equals: user.id } };
+    },
     create: isLoggedIn,
-    update: isLoggedIn,
-    delete: isLoggedIn,
+    // Replace/delete: an admin can touch any file; everyone else only their own.
+    // (Deletion is ALSO blocked while a file is in use — see protectMediaInUse.)
+    update: ({ req: { user } }) =>
+      userIsAdmin(user) ? true : { owner: { equals: user?.id } },
+    delete: ({ req: { user } }) =>
+      userIsAdmin(user) ? true : { owner: { equals: user?.id } },
   },
-  admin: { group: "Content" },
-  // Block deleting a file that's still used by a post (cover/audio/in-text) or a
-  // user's avatar — applies to everyone, admins included.
+  admin: { group: "Content", defaultColumns: ["filename", "alt", "owner"] },
+  // stampOwner records the uploader on create. protectMediaInUse blocks deleting a
+  // file still used by a post (cover/audio/in-text) or a user's avatar — applies to
+  // everyone, admins included; you must remove it from / delete those first.
   hooks: {
+    beforeChange: [stampOwner],
     beforeDelete: [protectMediaInUse],
     afterDelete: [auditMediaDelete],
   },
@@ -41,6 +56,20 @@ export const Media: CollectionConfig = {
       name: "alt",
       type: "text",
       admin: { description: "Describe the image for screen readers and SEO." },
+    },
+    // System-only: who uploaded this file. Set by stampOwner; never editable by
+    // hand. Drives the per-user access scoping above. Pre-existing files have no
+    // owner (null) and are managed by admins only.
+    {
+      name: "owner",
+      type: "relationship",
+      relationTo: "users",
+      access: { update: () => false },
+      admin: {
+        position: "sidebar",
+        readOnly: true,
+        description: "Who uploaded this file.",
+      },
     },
   ],
 };

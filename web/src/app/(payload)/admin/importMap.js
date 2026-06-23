@@ -1,6 +1,7 @@
 import { CreateUserWarning as CreateUserWarning_751e5901b8e49c2da55d5f542a4a99a0 } from '../../../components/admin/CreateUserWarning'
 import { UserStatusCell as UserStatusCell_389445e7208fed05ce1d82f37e154c05 } from '../../../components/admin/UserStatusCell'
 import { ResendInvite as ResendInvite_d7a2e4d82d5d5abc7b6648c81796be4f } from '../../../components/admin/ResendInvite'
+import { AccountActions as AccountActions_b564369a058367a481e030d85bf60b21 } from '../../../components/admin/AccountActions'
 import { DiscoverabilityControl as DiscoverabilityControl_ffff8065df5546cd8c7f45aaa1da9773 } from '../../../components/admin/DiscoverabilityControl'
 import { UserListFilters as UserListFilters_6d4a935b9cb4205620416ca99a2c0ccd } from '../../../components/admin/UserListFilters'
 import { WorkflowPanel as WorkflowPanel_2f4e09647b17ee01f091b0106a1ed65d } from '../../../components/admin/WorkflowPanel'
@@ -43,6 +44,7 @@ export const importMap = {
   "/components/admin/CreateUserWarning#CreateUserWarning": CreateUserWarning_751e5901b8e49c2da55d5f542a4a99a0,
   "/components/admin/UserStatusCell#UserStatusCell": UserStatusCell_389445e7208fed05ce1d82f37e154c05,
   "/components/admin/ResendInvite#ResendInvite": ResendInvite_d7a2e4d82d5d5abc7b6648c81796be4f,
+  "/components/admin/AccountActions#AccountActions": AccountActions_b564369a058367a481e030d85bf60b21,
   "/components/admin/DiscoverabilityControl#DiscoverabilityControl": DiscoverabilityControl_ffff8065df5546cd8c7f45aaa1da9773,
   "/components/admin/UserListFilters#UserListFilters": UserListFilters_6d4a935b9cb4205620416ca99a2c0ccd,
   "/components/admin/WorkflowPanel#WorkflowPanel": WorkflowPanel_2f4e09647b17ee01f091b0106a1ed65d,

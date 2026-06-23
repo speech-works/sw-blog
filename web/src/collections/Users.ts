@@ -1,7 +1,7 @@
 import type { CollectionConfig, Where } from "payload";
 import { AUTHOR_ROLES } from "../lib/roles";
 import { firstUserAdmin } from "../access/firstUserAdmin";
-import { isAdmin, isAdminField, userIsAdmin, userIsEditor } from "../access/roles";
+import { isActive, isAdmin, isAdminField, userIsAdmin, userIsEditor } from "../access/roles";
 import {
   allowForgotPasswordEmailSend,
   computeDiscoverability,
@@ -10,12 +10,22 @@ import {
 import { auditUsersChange, auditUsersDelete } from "../hooks/audit";
 import {
   activateOnPasswordSet,
+  deactivateHandler,
   enforceNonEmptyName,
   guardForgotPasswordActivation,
+  guardLastAdminDelete,
+  guardLastAdminDemotion,
   inviteHandler,
   lockEmailForNonAdmins,
+  reactivateHandler,
   resendInviteHandler,
 } from "../hooks/invite";
+import {
+  blockDeactivatedLogin,
+  freezeDeactivatedUser,
+  guardDeleteReferencedUser,
+  guardSelfAccountDeletion,
+} from "../hooks/deactivation";
 import { resetPasswordEmail } from "../lib/authEmail";
 
 // One auth-enabled collection = login identity AND public byline. Keeping them
@@ -42,6 +52,8 @@ export const Users: CollectionConfig = {
     },
   },
   access: {
+    // Admin-panel gate: a deactivated session can't render the admin UI at all.
+    admin: ({ req: { user } }) => isActive(user),
     // Editors/admins see everyone. An author sees: their own profile; anyone who's
     // currently "discoverable" (so they can be picked as a co-author); AND all
     // editors/admins (so the names of whoever submitted/reviewed/approved/published
@@ -50,9 +62,9 @@ export const Users: CollectionConfig = {
     // bypasses this.
     read: ({ req: { user } }) => {
       if (userIsEditor(user)) return true;
-      if (!user) return false;
+      if (!isActive(user)) return false;
       const clauses: Where[] = [
-        { id: { equals: user.id } },
+        { id: { equals: user!.id } },
         { discoverableUntil: { greater_than: new Date().toISOString() } },
         { roles: { in: ["admin", "editor"] } },
       ];
@@ -60,19 +72,29 @@ export const Users: CollectionConfig = {
     },
     create: isAdmin, // only admins invite new users (first user is exempt)
     update: ({ req: { user } }) =>
-      userIsAdmin(user) ? true : { id: { equals: user?.id } }, // self or admin
+      userIsAdmin(user) ? true : isActive(user) ? { id: { equals: user!.id } } : false, // self (if active) or admin
     delete: isAdmin,
   },
   endpoints: [
     { path: "/invite", method: "post", handler: inviteHandler },
     { path: "/:id/resend-invite", method: "post", handler: resendInviteHandler },
+    { path: "/:id/deactivate", method: "post", handler: deactivateHandler },
+    { path: "/:id/reactivate", method: "post", handler: reactivateHandler },
   ],
   hooks: {
+    beforeLogin: [blockDeactivatedLogin],
     beforeOperation: [allowForgotPasswordEmailSend, guardForgotPasswordActivation],
-    beforeChange: [enforceNonEmptyName, lockEmailForNonAdmins, computeDiscoverability],
+    beforeChange: [
+      freezeDeactivatedUser,
+      enforceNonEmptyName,
+      lockEmailForNonAdmins,
+      guardLastAdminDemotion,
+      computeDiscoverability,
+    ],
     afterChange: [auditUsersChange],
     afterOperation: [activateOnPasswordSet],
     afterRead: [stripPrivateUserFields],
+    beforeDelete: [guardSelfAccountDeletion, guardLastAdminDelete, guardDeleteReferencedUser],
     afterDelete: [auditUsersDelete],
   },
   fields: [
@@ -149,6 +171,29 @@ export const Users: CollectionConfig = {
       },
     },
     {
+      // System-managed lockout flag. Set true/false ONLY via the deactivate /
+      // reactivate endpoints (overrideAccess). A deactivated account is fully
+      // locked out (login, API, admin panel) while its data + published bylines
+      // stay frozen and intact.
+      name: "deactivated",
+      type: "checkbox",
+      defaultValue: false,
+      access: { create: () => false, update: () => false },
+      admin: { hidden: true },
+    },
+    {
+      name: "deactivatedAt",
+      type: "date",
+      access: { create: () => false, update: () => false },
+      admin: {
+        readOnly: true,
+        position: "sidebar",
+        condition: (data) => Boolean(data?.deactivated),
+        description: "When this account was deactivated.",
+        date: { pickerAppearance: "dayAndTime", displayFormat: "d MMM yyyy, h:mm a" },
+      },
+    },
+    {
       // Live invitation status + a one-click "Resend invitation" button (shown
       // only while the account is still pending). The component renders its own
       // "Account status" heading so no extra label is needed.
@@ -158,6 +203,17 @@ export const Users: CollectionConfig = {
         position: "sidebar",
         components: {
           Field: "/components/admin/ResendInvite#ResendInvite",
+        },
+      },
+    },
+    {
+      // Deactivate / Reactivate control (sidebar). Renders its own state + buttons.
+      name: "accountActions",
+      type: "ui",
+      admin: {
+        position: "sidebar",
+        components: {
+          Field: "/components/admin/AccountActions#AccountActions",
         },
       },
     },

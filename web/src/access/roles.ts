@@ -4,11 +4,18 @@
 import type { Access, FieldAccess } from "payload";
 import type { User } from "../payload-types";
 
-type MaybeUser = Pick<User, "roles"> | null | undefined;
+type MaybeUser = Pick<User, "roles" | "deactivated"> | null | undefined;
 type Role = NonNullable<NonNullable<User["roles"]>[number]>;
 
+// An active user = present AND not deactivated. A deactivated account is treated
+// as if it has no roles and isn't logged in, so it's denied EVERYWHERE these
+// predicates are used (collection + field access). This is the single chokepoint
+// that locks a deactivated user out of the whole system.
+export const isActive = (user: MaybeUser): boolean =>
+  Boolean(user) && user?.deactivated !== true;
+
 const hasRole = (user: MaybeUser, role: Role): boolean =>
-  Boolean(user?.roles?.includes(role));
+  isActive(user) && Boolean(user?.roles?.includes(role));
 
 // Plain predicates (also usable inside hooks, not just access functions).
 export const userIsAdmin = (user: MaybeUser): boolean => hasRole(user, "admin");
@@ -20,7 +27,7 @@ export const userIsReviewer = (user: MaybeUser): boolean =>
 // Collection-access wrappers: ({ req }) => boolean | Where
 export const isAdmin: Access = ({ req: { user } }) => userIsAdmin(user);
 export const isEditor: Access = ({ req: { user } }) => userIsEditor(user);
-export const isLoggedIn: Access = ({ req: { user } }) => Boolean(user);
+export const isLoggedIn: Access = ({ req: { user } }) => isActive(user);
 
 // Field-access wrappers: ({ req }) => boolean (field access is boolean-only)
 export const isAdminField: FieldAccess = ({ req: { user } }) => userIsAdmin(user);

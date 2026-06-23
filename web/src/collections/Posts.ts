@@ -1,9 +1,13 @@
 import type { CollectionConfig, Where } from "payload";
-import { isLoggedIn, isEditorField, userIsEditor } from "../access/roles";
+import { isActive, isLoggedIn, isEditorField, userIsEditor } from "../access/roles";
 import { stampOwner } from "../hooks/stampOwner";
-import { workflowGate } from "../hooks/workflowGate";
+import { workflowGate, guardPostDeletion } from "../hooks/workflowGate";
 import { ensureUniquePost } from "../hooks/uniquePost";
-import { enforceCoAuthorDiscoverability } from "../hooks/coAuthorGate";
+import {
+  enforceAuthorIsSelf,
+  enforceCoAuthorDiscoverability,
+  enforcePeerReviewerRules,
+} from "../hooks/coAuthorGate";
 import { previewPath } from "../lib/preview";
 import {
   revalidateAfterChange,
@@ -80,42 +84,49 @@ export const Posts: CollectionConfig = {
   },
   access: {
     create: isLoggedIn,
-    // anon: published only · author: own + published · editor: everything
+    // anon: published only · author: own + published · editor: everything.
+    // A deactivated account is treated as anonymous (published-only).
     read: ({ req: { user } }) => {
       if (userIsEditor(user)) return true;
       const published: Where = { _status: { equals: "published" } };
-      if (!user) return published;
-      const clauses: Where[] = [{ owner: { equals: user.id } }, published];
+      if (!isActive(user)) return published;
+      const clauses: Where[] = [{ owner: { equals: user!.id } }, published];
       return { or: clauses };
     },
     // editor: any · author: only their own, and only while editable
     update: ({ req: { user } }) => {
       if (userIsEditor(user)) return true;
-      if (!user) return false;
+      if (!isActive(user)) return false;
       const clauses: Where[] = [
-        { owner: { equals: user.id } },
+        { owner: { equals: user!.id } },
         { workflowStatus: { in: ["draft", "changesRequested"] } },
       ];
       return { and: clauses };
     },
     delete: ({ req: { user } }) => {
       if (userIsEditor(user)) return true;
-      if (!user) return false;
-      return { owner: { equals: user.id } };
+      if (!isActive(user)) return false;
+      return { owner: { equals: user!.id } };
     },
     // Keep drafts out of the version/diff viewer for non-owners. In version
     // records the document fields are nested under `version.`, so we filter on
     // `version.owner` (querying plain `owner` here throws).
     readVersions: ({ req: { user } }) => {
       if (userIsEditor(user)) return true;
-      if (!user) return false;
-      return { "version.owner": { equals: user.id } } as Where;
+      if (!isActive(user)) return false;
+      return { "version.owner": { equals: user!.id } } as Where;
     },
   },
   hooks: {
-    beforeValidate: [enforceCoAuthorDiscoverability, ensureUniquePost],
+    beforeValidate: [
+      enforceAuthorIsSelf,
+      enforceCoAuthorDiscoverability,
+      enforcePeerReviewerRules,
+      ensureUniquePost,
+    ],
     beforeChange: [stampOwner, workflowGate],
     afterChange: [revalidateAfterChange, auditPostsChange],
+    beforeDelete: [guardPostDeletion],
     afterDelete: [revalidateAfterDelete, auditPostsDelete],
   },
   fields: [

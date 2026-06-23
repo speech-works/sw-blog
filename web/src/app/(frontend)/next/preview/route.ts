@@ -11,8 +11,13 @@ import { getPayloadClient } from "@/lib/payload";
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const path = searchParams.get("path") || "/";
-  if (!path.startsWith("/")) {
-    return new Response("Invalid preview path.", { status: 400 });
+  // Must be a single-leading-slash internal path. Reject protocol-relative
+  // ("//host") and backslash ("/\\host") forms, which browsers treat as
+  // off-site URLs — otherwise the redirect below becomes an open redirect.
+  if (!path.startsWith("/") || path.startsWith("//") || path.startsWith("/\\")) {
+    return new Response("That preview link doesn't look right. Please launch the preview from the admin.", {
+      status: 400,
+    });
   }
 
   const payload = await getPayloadClient();

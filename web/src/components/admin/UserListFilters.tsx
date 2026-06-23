@@ -36,10 +36,11 @@ const FILTERS: FilterDef[] = [
     label: "All users",
     href: BASE,
     dot: "transparent",
-    // Active only when no status filter (flat pending param or nested and-group) is set.
+    // Active only when no status filter (flat pending/deactivated param or nested and-group) is set.
     isActive: (p) =>
       !p.has("where[accountActivated][equals]") &&
-      !p.has("where[and][0][accountActivated][equals]"),
+      !p.has("where[and][0][accountActivated][equals]") &&
+      !p.has("where[deactivated][equals]"),
   },
   {
     key: "pending",
@@ -62,6 +63,13 @@ const FILTERS: FilterDef[] = [
     dot: "#34d399",
     isActive: (p) => p.get("where[and][1][name][exists]") === "true",
   },
+  {
+    key: "deactivated",
+    label: "Deactivated",
+    href: `${BASE}?where[deactivated][equals]=true`,
+    dot: "#64748b",
+    isActive: (p) => p.get("where[deactivated][equals]") === "true",
+  },
 ];
 
 // Descriptions shown in the legend and as native tooltips on each chip.
@@ -69,6 +77,7 @@ const DESCRIPTIONS: Record<string, string> = {
   pending: "Invited but hasn't clicked their activation link yet.",
   incomplete: "Accepted invite but profile (name, type, bio) isn't fully filled in.",
   active: "Activated and profile is complete.",
+  deactivated: "Locked out by an admin. Published posts stay intact.",
 };
 
 const Chips: React.FC = () => {

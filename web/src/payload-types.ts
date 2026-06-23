@@ -127,6 +127,9 @@ export interface UserAuthOperations {
  */
 export interface User {
   id: number;
+  /**
+   * The public byline name. Can't be left empty.
+   */
   name?: string | null;
   /**
    * Shown after the name, e.g. "MS, CCC-SLP".
@@ -142,6 +145,11 @@ export interface User {
    * Becomes active once the invited user sets their password.
    */
   accountActivated?: boolean | null;
+  deactivated?: boolean | null;
+  /**
+   * When this account was deactivated.
+   */
+  deactivatedAt?: string | null;
   discoverabilityWindow?: ('hidden' | '1hour' | '8hours' | 'always') | null;
   discoverableUntil?: string | null;
   /**
@@ -180,6 +188,10 @@ export interface Media {
    * Describe the image for screen readers and SEO.
    */
   alt?: string | null;
+  /**
+   * Who uploaded this file.
+   */
+  owner?: (number | null) | User;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -441,6 +453,8 @@ export interface UsersSelect<T extends boolean = true> {
   bio?: T;
   photo?: T;
   accountActivated?: T;
+  deactivated?: T;
+  deactivatedAt?: T;
   discoverabilityWindow?: T;
   discoverableUntil?: T;
   roles?: T;
@@ -498,6 +512,7 @@ export interface PostsSelect<T extends boolean = true> {
  */
 export interface MediaSelect<T extends boolean = true> {
   alt?: T;
+  owner?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;

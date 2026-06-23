@@ -4,12 +4,13 @@ import type {
   BasePayload,
   CollectionAfterOperationHook,
   CollectionBeforeChangeHook,
+  CollectionBeforeDeleteHook,
   CollectionBeforeOperationHook,
   PayloadHandler,
 } from "payload";
 import { INVITE_EMAIL_SUBJECT, inviteEmail } from "../lib/authEmail";
 import { userIsAdmin } from "../access/roles";
-import { auditUserInvite } from "./audit";
+import { auditUserInvite, auditUserLifecycle } from "./audit";
 
 // Invitations reuse Payload's reset-password token machinery: we mint a token,
 // stash it on the user (resetPasswordToken/Expiration) with a 48h expiry, and
@@ -154,10 +155,15 @@ export const guardForgotPasswordActivation: CollectionBeforeOperationHook = asyn
     depth: 0,
     overrideAccess: true,
   });
-  const user = found.docs[0] as { accountActivated?: unknown } | undefined;
-  if (user && user.accountActivated !== true) {
+  const user = found.docs[0] as
+    | { accountActivated?: unknown; deactivated?: unknown }
+    | undefined;
+  // A deactivated account can't self-recover via reset (it's fully locked); a
+  // not-yet-activated account must use its invite link. Same generic message for
+  // both — no internal state leaked.
+  if (user && (user.accountActivated !== true || user.deactivated === true)) {
     throw new APIError(
-      "We couldn't start a password reset for that email. If you were recently invited, use the invitation link we emailed you, or ask your administrator to resend it.",
+      "We couldn't start a password reset for that email. If you were recently invited, use the invitation link we emailed you, or ask your administrator for help.",
       403,
     );
   }
@@ -179,6 +185,66 @@ export const enforceNonEmptyName: CollectionBeforeChangeHook = ({ data }) => {
       throw new APIError("Please enter a name — it can't be empty.", 400);
     }
     d.name = trimmed; // normalize: store the trimmed value
+  }
+  return data;
+};
+
+// --- last-admin protection -----------------------------------------------------
+// The site must always have at least one admin — they're the only ones who can
+// invite users and grant roles. These two guards stop the system being driven into
+// an unrecoverable "zero admins" state (which would otherwise need direct DB access
+// to fix).
+
+const adminsOtherThan = async (
+  payload: BasePayload,
+  excludeId: unknown,
+): Promise<number> => {
+  const { totalDocs } = await payload.count({
+    collection: "users",
+    where: { and: [{ roles: { in: ["admin"] } }, { id: { not_equals: excludeId } }] },
+    overrideAccess: true,
+  });
+  return totalDocs;
+};
+
+// Block deleting the last admin.
+export const guardLastAdminDelete: CollectionBeforeDeleteHook = async ({ req, id }) => {
+  const target = await req.payload
+    .findByID({ collection: "users", id, depth: 0, overrideAccess: true })
+    .catch(() => null);
+  const roles = (target as { roles?: unknown })?.roles;
+  const isAdminUser = Array.isArray(roles) && roles.includes("admin");
+  if (!isAdminUser) return;
+
+  if ((await adminsOtherThan(req.payload, id)) === 0) {
+    throw new APIError(
+      "You can't delete the last administrator — the site would be left with no one who can manage users. Make someone else an admin first.",
+      400,
+    );
+  }
+};
+
+// Block removing the admin role from the last admin (self-demotion included).
+export const guardLastAdminDemotion: CollectionBeforeChangeHook = async ({
+  data,
+  req,
+  originalDoc,
+  operation,
+}) => {
+  if (operation !== "update") return data;
+  const d = data as Record<string, unknown>;
+  if (!("roles" in d)) return data; // roles aren't part of this write
+
+  const orig = (originalDoc ?? {}) as Record<string, unknown>;
+  const wasAdmin = Array.isArray(orig.roles) && orig.roles.includes("admin");
+  const willBeAdmin = Array.isArray(d.roles) && (d.roles as unknown[]).includes("admin");
+  if (wasAdmin && !willBeAdmin) {
+    if ((await adminsOtherThan(req.payload, orig.id)) === 0) {
+      throw new APIError(
+        "You can't remove the admin role from the last administrator — someone must always be able to manage users. Make another person an admin first.",
+        400,
+      );
+    }
   }
   return data;
 };
@@ -364,4 +430,134 @@ export const resendInviteHandler: PayloadHandler = async (req) => {
     emailSent: result.emailSent,
     reason: result.reason,
   });
+};
+
+// POST /api/users/:id/deactivate — admin-only. Locks the account out of the whole
+// system (the `deactivated` flag denies access everywhere via access/roles.ts),
+// drops them from the co-author directory, and best-effort clears their sessions
+// to force an immediate logout. Their data + published bylines stay frozen intact.
+export const deactivateHandler: PayloadHandler = async (req) => {
+  if (!userIsAdmin(req.user)) {
+    return json({ ok: false, message: "You don't have permission to do that." }, 403);
+  }
+  const id = req.routeParams?.id;
+  if (id == null) {
+    return json({ ok: false, message: "Missing user id." }, 400);
+  }
+
+  const { payload } = req;
+  let user;
+  try {
+    user = await payload.findByID({
+      collection: "users",
+      id: id as string | number,
+      depth: 0,
+      overrideAccess: true,
+    });
+  } catch {
+    return json({ ok: false, message: "That user no longer exists." }, 404);
+  }
+  if (!user) {
+    return json({ ok: false, message: "That user no longer exists." }, 404);
+  }
+
+  const u = user as { deactivated?: unknown; roles?: unknown };
+  if (u.deactivated === true) {
+    return json({ ok: false, message: "This account is already deactivated." }, 400);
+  }
+  // Never strand the site without an admin.
+  const isAdminUser = Array.isArray(u.roles) && u.roles.includes("admin");
+  if (isAdminUser && (await adminsOtherThan(payload, id)) === 0) {
+    return json(
+      {
+        ok: false,
+        message:
+          "You can't deactivate the last administrator — someone must always be able to manage the site. Make another person an admin first.",
+      },
+      400,
+    );
+  }
+
+  try {
+    await payload.update({
+      collection: "users",
+      id: id as string | number,
+      overrideAccess: true,
+      depth: 0,
+      // discoverabilityWindow:"hidden" → computeDiscoverability nulls discoverableUntil,
+      // removing them from the co-author / peer-reviewer pickers.
+      data: {
+        deactivated: true,
+        deactivatedAt: new Date().toISOString(),
+        discoverabilityWindow: "hidden",
+      },
+    });
+  } catch (error) {
+    console.error("[sw-blog] deactivate failed:", error);
+    return json({ ok: false, message: "Could not deactivate this account. Please try again." }, 500);
+  }
+
+  // Best-effort: clear active sessions to force an immediate logout. Not critical —
+  // the deactivated flag already denies every request via the access layer.
+  try {
+    await payload.update({
+      collection: "users",
+      id: id as string | number,
+      overrideAccess: true,
+      depth: 0,
+      data: { sessions: [] },
+    });
+  } catch (error) {
+    console.error("[sw-blog] clearing sessions on deactivate failed (non-fatal):", error);
+  }
+
+  await auditUserLifecycle(req, user as unknown as Record<string, unknown>, "deactivated");
+  return json({ ok: true, deactivated: true });
+};
+
+// POST /api/users/:id/reactivate — admin-only. Restores access fully (roles were
+// never cleared). Discoverability stays hidden until the person opts back in.
+export const reactivateHandler: PayloadHandler = async (req) => {
+  if (!userIsAdmin(req.user)) {
+    return json({ ok: false, message: "You don't have permission to do that." }, 403);
+  }
+  const id = req.routeParams?.id;
+  if (id == null) {
+    return json({ ok: false, message: "Missing user id." }, 400);
+  }
+
+  const { payload } = req;
+  let user;
+  try {
+    user = await payload.findByID({
+      collection: "users",
+      id: id as string | number,
+      depth: 0,
+      overrideAccess: true,
+    });
+  } catch {
+    return json({ ok: false, message: "That user no longer exists." }, 404);
+  }
+  if (!user) {
+    return json({ ok: false, message: "That user no longer exists." }, 404);
+  }
+  if ((user as { deactivated?: unknown }).deactivated !== true) {
+    return json({ ok: false, message: "This account is already active." }, 400);
+  }
+
+  try {
+    await payload.update({
+      collection: "users",
+      id: id as string | number,
+      overrideAccess: true,
+      depth: 0,
+      data: { deactivated: false, deactivatedAt: null },
+    });
+  } catch (error) {
+    console.error("[sw-blog] reactivate failed:", error);
+    return json({ ok: false, message: "Could not reactivate this account. Please try again." }, 500);
+  }
+
+  await auditUserLifecycle(req, user as unknown as Record<string, unknown>, "reactivated");
+  return json({ ok: true, deactivated: false });
 };

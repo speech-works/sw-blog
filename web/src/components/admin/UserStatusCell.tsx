@@ -14,9 +14,17 @@ type StatusInfo = {
   color: string;
 };
 
-// Three-tier status derived from row data — the Cell receives the full document
-// so we can check multiple fields without extra API calls.
+// Status derived from row data — the Cell receives the full document so we can
+// check multiple fields without extra API calls. Deactivated takes priority.
 const derive = (row: Record<string, unknown>): StatusInfo => {
+  if (row.deactivated === true) {
+    return {
+      label: "Deactivated",
+      dot: "#64748b",
+      bg: "rgba(100,116,139,0.15)",
+      color: "#94a3b8",
+    };
+  }
   if (row.accountActivated !== true) {
     return {
       label: "Invitation pending",

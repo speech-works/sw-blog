@@ -1,4 +1,8 @@
-import { APIError, type CollectionBeforeChangeHook } from "payload";
+import {
+  APIError,
+  type CollectionBeforeChangeHook,
+  type CollectionBeforeDeleteHook,
+} from "payload";
 import { userIsAdmin, userIsEditor } from "../access/roles";
 
 // The server-side enforcement of the approval workflow. This runs on every save and
@@ -189,4 +193,28 @@ export const workflowGate: CollectionBeforeChangeHook = ({
   }
 
   return data;
+};
+
+// Authors may only delete their OWN plain drafts. A post that's in review,
+// has changes requested, or is published is part of the editorial record /
+// live site — it must be edited (which re-enters review) rather than deleted.
+// Ownership is already enforced by the collection's delete access; this hook adds
+// the state rule and a friendly message. Editors/admins can delete anything.
+export const guardPostDeletion: CollectionBeforeDeleteHook = async ({ req, id }) => {
+  if (userIsEditor(req.user)) return;
+
+  const post = await req.payload
+    .findByID({ collection: "posts", id, depth: 0, overrideAccess: true })
+    .catch(() => null);
+  if (!post) return;
+
+  const p = post as { workflowStatus?: unknown; _status?: unknown };
+  const isPublished = p._status === "published";
+  const isPlainDraft = p.workflowStatus === "draft";
+  if (isPublished || !isPlainDraft) {
+    throw new APIError(
+      "Only your own drafts can be deleted. A post that's in review or already published can't be removed — open it, make your changes, and send it back for review instead.",
+      403,
+    );
+  }
 };
