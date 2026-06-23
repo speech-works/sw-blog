@@ -151,20 +151,24 @@ export const resetPasswordEmail = (token: string, user: MaybeUser) => {
   });
 };
 
-export const welcomeEmail = (token: string, user: MaybeUser) => {
+export const INVITE_EMAIL_SUBJECT = "You're invited to Speechworks Blog";
+
+export const inviteEmail = (token: string, user: MaybeUser) => {
   const setupURL = buildAdminResetURL(token);
   const name = userDisplayName(user);
   const roleText = userRoleText(user);
   return buildActionEmail({
-    buttonLabel: "Set password",
+    buttonLabel: "Set your password",
     buttonURL: setupURL,
     details: ["Role: " + roleText],
     intro:
       "Hi " +
       name +
-      ", your Speechworks Blog account has been created. Set your password to sign in.",
-    note: "This link expires in 24 hours.",
-    preheader: "Your Speechworks Blog account is ready.",
-    title: "Welcome to Speechworks Blog",
+      ", you've been invited to join Speechworks Blog as " +
+      roleText +
+      ". Set your password to activate your account and start contributing.",
+    note: "This invitation link expires in 48 hours. If it expires, ask your administrator to resend it.",
+    preheader: "You've been invited to Speechworks Blog.",
+    title: "You're invited to Speechworks Blog",
   });
 };

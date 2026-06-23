@@ -64,6 +64,14 @@ export default buildConfig({
       },
       // Login-time "review queue" on the dashboard.
       beforeDashboard: ["/components/admin/Notifications#Notifications"],
+      // "Invite a user" entry in the nav → the email-only invite screen.
+      afterNavLinks: ["/components/admin/InviteNavLink#InviteNavLink"],
+      views: {
+        inviteUser: {
+          Component: "/components/admin/InviteUser#InviteUser",
+          path: "/invite-user",
+        },
+      },
     },
     meta: {
       titleSuffix: "— Speechworks Blog",

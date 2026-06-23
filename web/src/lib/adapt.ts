@@ -8,7 +8,7 @@ import type { Post as PayloadPost, User } from "@/payload-types";
 export function toAuthor(u: number | User | null | undefined): Author | undefined {
   if (!u || typeof u !== "object") return undefined;
   return {
-    name: u.name,
+    name: u.name ?? "",
     credentials: u.credentials ?? undefined,
     role: (u.contributorType ?? undefined) as Author["role"],
     photo: u.photo,
@@ -22,7 +22,7 @@ export function toAuthors(
   return (list ?? [])
     .filter((u): u is User => Boolean(u) && typeof u === "object")
     .map((u) => ({
-      name: u.name,
+      name: u.name ?? "",
       credentials: u.credentials ?? undefined,
       role: (u.contributorType ?? undefined) as Author["role"],
     }));

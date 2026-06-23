@@ -8,7 +8,12 @@ import {
   stripPrivateUserFields,
 } from "../hooks/discoverability";
 import { auditUsersChange, auditUsersDelete } from "../hooks/audit";
-import { sendWelcomeEmail } from "../hooks/welcomeEmail";
+import {
+  activateOnPasswordSet,
+  guardForgotPasswordActivation,
+  inviteHandler,
+  resendInviteHandler,
+} from "../hooks/invite";
 import { resetPasswordEmail } from "../lib/authEmail";
 
 // One auth-enabled collection = login identity AND public byline. Keeping them
@@ -53,16 +58,23 @@ export const Users: CollectionConfig = {
       userIsAdmin(user) ? true : { id: { equals: user?.id } }, // self or admin
     delete: isAdmin,
   },
+  endpoints: [
+    { path: "/invite", method: "post", handler: inviteHandler },
+    { path: "/:id/resend-invite", method: "post", handler: resendInviteHandler },
+  ],
   hooks: {
-    beforeOperation: [allowForgotPasswordEmailSend],
+    beforeOperation: [allowForgotPasswordEmailSend, guardForgotPasswordActivation],
     beforeChange: [computeDiscoverability],
-    afterChange: [auditUsersChange, sendWelcomeEmail],
+    afterChange: [auditUsersChange],
+    afterOperation: [activateOnPasswordSet],
     afterRead: [stripPrivateUserFields],
     afterDelete: [auditUsersDelete],
   },
   fields: [
     // --- public byline profile ---
-    { name: "name", type: "text", required: true },
+    // Optional: an invite may carry only an email. The invited person fills this
+    // in when they complete their profile after setting a password.
+    { name: "name", type: "text" },
     {
       name: "credentials",
       type: "text",
@@ -79,6 +91,33 @@ export const Users: CollectionConfig = {
     },
     { name: "bio", type: "textarea" },
     { name: "photo", type: "upload", relationTo: "media" },
+
+    // --- invitation / activation status (system-managed) ---
+    {
+      name: "accountActivated",
+      type: "checkbox",
+      defaultValue: false,
+      // System-set: flipped to true by the activateOnPasswordSet hook the first
+      // time the invited user sets a password. Never editable by hand.
+      access: { create: () => false, update: () => false },
+      admin: {
+        readOnly: true,
+        position: "sidebar",
+        description: "Becomes active once the invited user sets their password.",
+      },
+    },
+    {
+      // Live invitation status + a one-click "Resend invitation" button (shown
+      // only while the account is still pending).
+      name: "inviteStatus",
+      type: "ui",
+      admin: {
+        position: "sidebar",
+        components: {
+          Field: "/components/admin/ResendInvite#ResendInvite",
+        },
+      },
+    },
 
     // --- discoverability (lets other authors find you to add you as a co-author) ---
     {

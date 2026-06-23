@@ -127,7 +127,7 @@ export interface UserAuthOperations {
  */
 export interface User {
   id: number;
-  name: string;
+  name?: string | null;
   /**
    * Shown after the name, e.g. "MS, CCC-SLP".
    */
@@ -138,6 +138,10 @@ export interface User {
   contributorType?: ('pws' | 'slp' | 'parent' | 'researcher' | 'ally') | null;
   bio?: string | null;
   photo?: (number | null) | Media;
+  /**
+   * Becomes active once the invited user sets their password.
+   */
+  accountActivated?: boolean | null;
   discoverabilityWindow?: ('hidden' | '1hour' | '8hours' | 'always') | null;
   discoverableUntil?: string | null;
   /**
@@ -433,6 +437,7 @@ export interface UsersSelect<T extends boolean = true> {
   contributorType?: T;
   bio?: T;
   photo?: T;
+  accountActivated?: T;
   discoverabilityWindow?: T;
   discoverableUntil?: T;
   roles?: T;
