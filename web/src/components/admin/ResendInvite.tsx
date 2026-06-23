@@ -96,9 +96,11 @@ export const ResendInvite: React.FC = () => {
           fontSize: 13,
           fontWeight: 600,
           cursor: busy ? "default" : "pointer",
-          border: "1px solid var(--theme-elevation-200)",
-          background: "var(--theme-elevation-150)",
+          border: "1px solid var(--theme-elevation-300, #334155)",
+          background: "var(--theme-elevation-100, rgba(255,255,255,0.04))",
+          color: "var(--theme-text, inherit)",
           opacity: busy ? 0.6 : 1,
+          whiteSpace: "nowrap",
         }}
       >
         {busy ? "Sending…" : "Resend invitation"}

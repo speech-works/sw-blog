@@ -92,9 +92,10 @@ export const AccountActions: React.FC = () => {
               fontWeight: 600,
               cursor: busy ? "default" : "pointer",
               border: "1px solid #34d399",
-              background: "#ecfdf5",
-              color: "#065f46",
+              background: "var(--theme-elevation-100, rgba(255,255,255,0.04))",
+              color: "#34d399",
               opacity: busy ? 0.6 : 1,
+              whiteSpace: "nowrap",
             }}
           >
             {busy ? "Working…" : "Reactivate account"}
@@ -115,9 +116,10 @@ export const AccountActions: React.FC = () => {
               fontWeight: 600,
               cursor: busy ? "default" : "pointer",
               border: "1px solid #f87171",
-              background: "#fef2f2",
-              color: "#991b1b",
+              background: "var(--theme-elevation-100, rgba(255,255,255,0.04))",
+              color: "#f87171",
               opacity: busy ? 0.6 : 1,
+              whiteSpace: "nowrap",
             }}
           >
             {busy ? "Working…" : "Deactivate account"}
