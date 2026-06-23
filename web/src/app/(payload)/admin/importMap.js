@@ -1,4 +1,5 @@
 import { CreateUserWarning as CreateUserWarning_751e5901b8e49c2da55d5f542a4a99a0 } from '../../../components/admin/CreateUserWarning'
+import { AuthControlsGuide as AuthControlsGuide_c1acc2987870fe718a5233dbe817ad5e } from '../../../components/admin/AuthControlsGuide'
 import { UserStatusCell as UserStatusCell_389445e7208fed05ce1d82f37e154c05 } from '../../../components/admin/UserStatusCell'
 import { ResendInvite as ResendInvite_d7a2e4d82d5d5abc7b6648c81796be4f } from '../../../components/admin/ResendInvite'
 import { AccountActions as AccountActions_b564369a058367a481e030d85bf60b21 } from '../../../components/admin/AccountActions'
@@ -42,6 +43,7 @@ import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } f
 /** @type import('payload').ImportMap */
 export const importMap = {
   "/components/admin/CreateUserWarning#CreateUserWarning": CreateUserWarning_751e5901b8e49c2da55d5f542a4a99a0,
+  "/components/admin/AuthControlsGuide#AuthControlsGuide": AuthControlsGuide_c1acc2987870fe718a5233dbe817ad5e,
   "/components/admin/UserStatusCell#UserStatusCell": UserStatusCell_389445e7208fed05ce1d82f37e154c05,
   "/components/admin/ResendInvite#ResendInvite": ResendInvite_d7a2e4d82d5d5abc7b6648c81796be4f,
   "/components/admin/AccountActions#AccountActions": AccountActions_b564369a058367a481e030d85bf60b21,

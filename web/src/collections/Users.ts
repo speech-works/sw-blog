@@ -54,6 +54,10 @@ export const Users: CollectionConfig = {
   access: {
     // Admin-panel gate: a deactivated session can't render the admin UI at all.
     admin: ({ req: { user } }) => isActive(user),
+    // Only admins can unlock accounts locked by too many failed attempts. This
+    // controls whether Payload renders the "Force Unlock" button in the auth
+    // block — non-admins never see it.
+    unlock: isAdmin,
     // Editors/admins see everyone. An author sees: their own profile; anyone who's
     // currently "discoverable" (so they can be picked as a co-author); AND all
     // editors/admins (so the names of whoever submitted/reviewed/approved/published
@@ -105,6 +109,18 @@ export const Users: CollectionConfig = {
       admin: {
         components: {
           Field: "/components/admin/CreateUserWarning#CreateUserWarning",
+        },
+      },
+    },
+
+    // Explains the built-in "Change Password" and "Force Unlock" buttons that
+    // Payload renders in the auth block above. Shown only on edit pages.
+    {
+      name: "authControlsGuide",
+      type: "ui",
+      admin: {
+        components: {
+          Field: "/components/admin/AuthControlsGuide#AuthControlsGuide",
         },
       },
     },
