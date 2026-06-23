@@ -77,8 +77,8 @@ export const AccountActions: React.FC = () => {
           onCancel={() => setShowConfirm(false)}
         />
       )}
-      <div style={{ marginBottom: "1.5rem" }}>
-        <div style={{ fontWeight: 600, marginBottom: 6 }}>Account access</div>
+      <div className="sw-side">
+        <div className="sw-side__title">Account access</div>
         {deactivated ? (
           <>
             <Box tone="warning">

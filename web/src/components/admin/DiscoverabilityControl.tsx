@@ -76,8 +76,8 @@ export const DiscoverabilityControl: React.FC = () => {
   };
 
   return (
-    <div style={{ marginBottom: "1.5rem" }}>
-      <div style={{ fontWeight: 600, marginBottom: 6 }}>Discoverability</div>
+    <div className="sw-side">
+      <div className="sw-side__title">Discoverability</div>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
         <span
           style={{

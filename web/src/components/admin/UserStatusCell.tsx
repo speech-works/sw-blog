@@ -59,15 +59,16 @@ export const UserStatusCell: React.FC<Props> = ({ rowData = {} }) => {
       style={{
         display: "inline-flex",
         alignItems: "center",
-        gap: 5,
-        padding: "3px 9px 3px 6px",
-        borderRadius: 20,
+        gap: 6,
+        padding: "3px 10px 3px 8px",
+        borderRadius: 999,
         background: bg,
+        border: `1px solid ${dot}40`,
         fontSize: 11,
         fontWeight: 600,
         color,
         whiteSpace: "nowrap",
-        lineHeight: 1.4,
+        lineHeight: 1.5,
       }}
     >
       <span

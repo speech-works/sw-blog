@@ -41,8 +41,8 @@ export const ResendInvite: React.FC = () => {
 
   if (activated) {
     return (
-      <div style={{ marginBottom: "1.5rem" }}>
-        <div style={{ fontWeight: 600, marginBottom: 6 }}>Account status</div>
+      <div className="sw-side">
+        <div className="sw-side__title">Account status</div>
         <Box tone="success">Active — this person has set up their account.</Box>
       </div>
     );
@@ -80,8 +80,8 @@ export const ResendInvite: React.FC = () => {
   };
 
   return (
-    <div style={{ marginBottom: "1.5rem" }}>
-      <div style={{ fontWeight: 600, marginBottom: 6 }}>Account status</div>
+    <div className="sw-side">
+      <div className="sw-side__title">Account status</div>
       <Box tone="warning">
         Invitation pending — this person hasn&rsquo;t set a password yet.
       </Box>
