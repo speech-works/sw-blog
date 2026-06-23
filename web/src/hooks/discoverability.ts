@@ -1,6 +1,7 @@
 import type {
   CollectionAfterReadHook,
   CollectionBeforeChangeHook,
+  CollectionBeforeOperationHook,
 } from "payload";
 import { userIsEditor } from "../access/roles";
 
@@ -12,6 +13,17 @@ import { userIsEditor } from "../access/roles";
 const HOUR_MS = 60 * 60 * 1000;
 // Sentinel far-future date = "always discoverable".
 export const ALWAYS_DISCOVERABLE = "9999-12-31T00:00:00.000Z";
+const AUTH_EMAIL_CONTEXT_KEY = "allowPrivateUserEmailForAuthEmail";
+
+export const allowForgotPasswordEmailSend: CollectionBeforeOperationHook = ({
+  args,
+  operation,
+}) => {
+  if (operation === "forgotPassword") {
+    args.req.context[AUTH_EMAIL_CONTEXT_KEY] = true;
+  }
+  return args;
+};
 
 export const computeDiscoverability: CollectionBeforeChangeHook = ({ data }) => {
   const d = data as Record<string, unknown>;
@@ -35,6 +47,8 @@ export const computeDiscoverability: CollectionBeforeChangeHook = ({ data }) => 
 // Keep a user's email private from everyone except themselves and editors/admins
 // — even while they're discoverable, others should only see name/badge/photo.
 export const stripPrivateUserFields: CollectionAfterReadHook = ({ doc, req }) => {
+  if (req.context?.[AUTH_EMAIL_CONTEXT_KEY]) return doc;
+
   if (doc && !userIsEditor(req.user) && req.user?.id !== doc.id) {
     return { ...doc, email: undefined } as typeof doc;
   }

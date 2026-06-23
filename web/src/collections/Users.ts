@@ -3,6 +3,7 @@ import { AUTHOR_ROLES } from "../lib/roles";
 import { firstUserAdmin } from "../access/firstUserAdmin";
 import { isAdmin, isAdminField, userIsAdmin, userIsEditor } from "../access/roles";
 import {
+  allowForgotPasswordEmailSend,
   computeDiscoverability,
   stripPrivateUserFields,
 } from "../hooks/discoverability";
@@ -44,6 +45,7 @@ export const Users: CollectionConfig = {
     delete: isAdmin,
   },
   hooks: {
+    beforeOperation: [allowForgotPasswordEmailSend],
     beforeChange: [computeDiscoverability],
     afterChange: [auditUsersChange, sendWelcomeEmail],
     afterRead: [stripPrivateUserFields],
