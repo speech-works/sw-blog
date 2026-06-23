@@ -9,6 +9,7 @@ import {
 } from "../hooks/discoverability";
 import { auditUsersChange, auditUsersDelete } from "../hooks/audit";
 import { sendWelcomeEmail } from "../hooks/welcomeEmail";
+import { resetPasswordEmail } from "../lib/authEmail";
 
 // One auth-enabled collection = login identity AND public byline. Keeping them
 // as a single record is what makes the "an author only ever touches their own
@@ -16,7 +17,15 @@ import { sendWelcomeEmail } from "../hooks/welcomeEmail";
 // drift out of sync).
 export const Users: CollectionConfig = {
   slug: "users",
-  auth: true,
+  auth: {
+    forgotPassword: {
+      generateEmailHTML: (args) => {
+        const { token = "", user } = args ?? {};
+        return resetPasswordEmail(token, user as Record<string, unknown>).html;
+      },
+      generateEmailSubject: () => "Reset your Speechworks Blog password",
+    },
+  },
   admin: {
     useAsTitle: "name",
     defaultColumns: ["name", "email", "roles"],
