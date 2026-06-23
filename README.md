@@ -147,6 +147,12 @@ Set these in the **Netlify dashboard** → Site configuration → Environment va
 | `R2_ENDPOINT` | `https://<account-id>.r2.cloudflarestorage.com` |
 | `R2_ACCESS_KEY_ID` | R2 API token access key |
 | `R2_SECRET_ACCESS_KEY` | R2 API token secret |
+| `SMTP_HOST` | Brevo SMTP host — `smtp-relay.brevo.com` |
+| `SMTP_PORT` | Brevo SMTP port — `587` |
+| `SMTP_USER` | Brevo SMTP login |
+| `SMTP_PASS` | Brevo SMTP key/password |
+| `EMAIL_FROM_ADDRESS` | Password reset sender — `no-reply@speechworks.app` |
+| `EMAIL_FROM_NAME` | Password reset sender name — `Speechworks Blog` |
 | `NODE_AUTH_TOKEN` | GitHub PAT (`read:packages`) to install `@speech-works/web-chrome` |
 | `NEXT_PUBLIC_SITE_URL` | This blog's origin — `https://blog.speechworks.app` |
 | `NEXT_PUBLIC_MARKETING_URL` | Marketing site origin — `https://speechworks.app` |

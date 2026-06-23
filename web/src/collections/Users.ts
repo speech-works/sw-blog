@@ -7,6 +7,7 @@ import {
   stripPrivateUserFields,
 } from "../hooks/discoverability";
 import { auditUsersChange, auditUsersDelete } from "../hooks/audit";
+import { sendWelcomeEmail } from "../hooks/welcomeEmail";
 
 // One auth-enabled collection = login identity AND public byline. Keeping them
 // as a single record is what makes the "an author only ever touches their own
@@ -44,7 +45,7 @@ export const Users: CollectionConfig = {
   },
   hooks: {
     beforeChange: [computeDiscoverability],
-    afterChange: [auditUsersChange],
+    afterChange: [auditUsersChange, sendWelcomeEmail],
     afterRead: [stripPrivateUserFields],
     afterDelete: [auditUsersDelete],
   },

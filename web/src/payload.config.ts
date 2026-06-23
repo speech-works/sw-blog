@@ -1,6 +1,7 @@
 import path from "path";
 import { buildConfig } from "payload";
 import { postgresAdapter } from "@payloadcms/db-postgres";
+import { nodemailerAdapter } from "@payloadcms/email-nodemailer";
 import { lexicalEditor, UploadFeature } from "@payloadcms/richtext-lexical";
 import { s3Storage } from "@payloadcms/storage-s3";
 import sharp from "sharp";
@@ -15,8 +16,27 @@ import { AuditLog } from "./collections/AuditLog";
 // admin locally; R2 can be wired up later, before deploy. Without it, uploads
 // fall back to local disk (fine for local dev).
 const r2Enabled = Boolean(process.env.R2_BUCKET && process.env.R2_ENDPOINT);
+const smtpEnabled = Boolean(
+  process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS,
+);
 
 export default buildConfig({
+  email: smtpEnabled
+    ? nodemailerAdapter({
+        defaultFromAddress:
+          process.env.EMAIL_FROM_ADDRESS || "no-reply@speechworks.app",
+        defaultFromName: process.env.EMAIL_FROM_NAME || "Speechworks Blog",
+        transportOptions: {
+          host: process.env.SMTP_HOST,
+          port: Number(process.env.SMTP_PORT || 587),
+          secure: false,
+          auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS,
+          },
+        },
+      })
+    : undefined,
   admin: {
     user: "users",
     importMap: { baseDir: path.resolve(process.cwd(), "src") },
