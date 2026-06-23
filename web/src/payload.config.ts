@@ -54,6 +54,10 @@ export default buildConfig({
   admin: {
     user: "users",
     importMap: { baseDir: path.resolve(process.cwd(), "src") },
+    // Default is 4 s — long error messages can't be read in time.
+    // closeButton is hardcoded true in Payload's ToastContainer, so users can
+    // also dismiss early. expand keeps multiple notifications visible at once.
+    toast: { duration: 8000, expand: true },
     // Use the logged-in user's uploaded Photo for the top-right avatar.
     avatar: { Component: "/components/admin/Avatar#AdminAvatar" },
     // Speechworks branding: logo on the login/nav, mark in the collapsed nav.
