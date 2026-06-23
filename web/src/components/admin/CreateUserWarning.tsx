@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useDocumentInfo } from "@payloadcms/ui";
+import { ConfirmModal } from "./ConfirmModal";
 
 // Shown only on the Users → Create New page (id is undefined when creating). It
 // steers admins to the email-invite flow: the native create form is DISABLED by
@@ -29,9 +30,6 @@ body[data-sw-create-locked="true"] button[type="submit"] {
   pointer-events: none !important;
 }
 `;
-
-const CONFIRM_MESSAGE =
-  "Creating a user here bypasses the secure invitation flow — the person can't set their own password, and the account is marked active immediately. This is not recommended.\n\nEnable this form anyway?";
 
 const Banner: React.FC<{ enabled: boolean; onEnable: () => void; onLock: () => void }> = ({
   enabled,
@@ -124,6 +122,7 @@ export const CreateUserWarning: React.FC = () => {
   const isCreate = !id;
   const [host, setHost] = useState<HTMLElement | null>(null);
   const [enabled, setEnabled] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   // Inject the lock stylesheet once.
   useEffect(() => {
@@ -160,12 +159,25 @@ export const CreateUserWarning: React.FC = () => {
 
   if (!isCreate) return null;
 
-  const handleEnable = () => {
-    if (window.confirm(CONFIRM_MESSAGE)) setEnabled(true);
-  };
-
   const banner = (
-    <Banner enabled={enabled} onEnable={handleEnable} onLock={() => setEnabled(false)} />
+    <>
+      {showConfirm && (
+        <ConfirmModal
+          title="Enable this form anyway?"
+          description="Creating a user here bypasses the secure invitation flow — the person can't set their own password, and the account is marked active immediately. This is not recommended. Consider using the Invite a user flow instead."
+          confirmLabel="Enable form"
+          cancelLabel="Take me to Invite"
+          tone="danger"
+          onConfirm={() => { setShowConfirm(false); setEnabled(true); }}
+          onCancel={() => { setShowConfirm(false); window.location.href = "/admin/invite-user"; }}
+        />
+      )}
+      <Banner
+        enabled={enabled}
+        onEnable={() => setShowConfirm(true)}
+        onLock={() => setEnabled(false)}
+      />
+    </>
   );
 
   // Prefer the top-of-column host; fall back to inline if the markup changed.

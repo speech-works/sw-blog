@@ -46,6 +46,7 @@ export const WorkflowPanel: React.FC = () => {
   const [busy, setBusy] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
   const [note, setNote] = useState("");
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [requesterName, setRequesterName] = useState<string | null>(null);
 
   // Resolve the name of whoever requested changes (the form only holds the id).
@@ -104,6 +105,7 @@ export const WorkflowPanel: React.FC = () => {
 
   const patch = async (data: Record<string, unknown>) => {
     setBusy(true);
+    setErrorMsg(null);
     try {
       const res = await fetch(`/api/posts/${id}?draft=true`, {
         method: "PATCH",
@@ -113,7 +115,7 @@ export const WorkflowPanel: React.FC = () => {
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        window.alert(body?.errors?.[0]?.message ?? "That action was not allowed.");
+        setErrorMsg(body?.errors?.[0]?.message ?? "That action was not allowed.");
         return;
       }
       window.location.reload();
@@ -200,6 +202,22 @@ export const WorkflowPanel: React.FC = () => {
           </span>
         ) : (
           <div className="sw-wf__actions">
+            {errorMsg && (
+              <div
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  borderRadius: 6,
+                  border: "1px solid #f87171",
+                  background: "#fef2f2",
+                  color: "#991b1b",
+                  fontSize: 12,
+                  lineHeight: 1.5,
+                }}
+              >
+                {errorMsg}
+              </div>
+            )}
             {showSubmit && (
               <Button
                 size="small"

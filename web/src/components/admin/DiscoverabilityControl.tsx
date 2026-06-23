@@ -42,6 +42,7 @@ export const DiscoverabilityControl: React.FC = () => {
   const { id } = useDocumentInfo();
   const modified = useFormModified();
   const [busy, setBusy] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [, tick] = useState(0);
 
   // Re-render every 30s so the countdown stays current.
@@ -55,6 +56,7 @@ export const DiscoverabilityControl: React.FC = () => {
   const choose = async (choice: string) => {
     if (!id) return;
     setBusy(true);
+    setErrorMsg(null);
     try {
       const res = await fetch(`/api/users/${id}?depth=0`, {
         method: "PATCH",
@@ -64,7 +66,7 @@ export const DiscoverabilityControl: React.FC = () => {
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        window.alert(body?.errors?.[0]?.message ?? "Could not update discoverability.");
+        setErrorMsg(body?.errors?.[0]?.message ?? "Could not update discoverability. Please try again.");
         return;
       }
       window.location.reload();
@@ -117,6 +119,22 @@ export const DiscoverabilityControl: React.FC = () => {
               </button>
             );
           })}
+        </div>
+      )}
+      {errorMsg && (
+        <div
+          style={{
+            marginTop: 8,
+            padding: "8px 12px",
+            borderRadius: 6,
+            border: "1px solid #f87171",
+            background: "#fef2f2",
+            color: "#991b1b",
+            fontSize: 12,
+            lineHeight: 1.5,
+          }}
+        >
+          {errorMsg}
         </div>
       )}
       <p style={{ fontSize: 12, opacity: 0.6, marginTop: 10, maxWidth: 460 }}>
