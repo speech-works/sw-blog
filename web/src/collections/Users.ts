@@ -136,6 +136,9 @@ export const Users: CollectionConfig = {
       access: { update: isAdminField },
       admin: {
         description: "The login address. Only an administrator can change this.",
+        components: {
+          Cell: "/components/admin/EmailCell#EmailCell",
+        },
       },
     },
 

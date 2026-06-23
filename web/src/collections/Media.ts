@@ -55,7 +55,12 @@ export const Media: CollectionConfig = {
     {
       name: "alt",
       type: "text",
-      admin: { description: "Describe the image for screen readers and SEO." },
+      admin: {
+        description: "Describe the image for screen readers and SEO.",
+        components: {
+          Cell: "/components/admin/AltCell#AltCell",
+        },
+      },
     },
     // System-only: who uploaded this file. Set by stampOwner; never editable by
     // hand. Drives the per-user access scoping above. Pre-existing files have no

@@ -4,6 +4,7 @@ import { UserStatusCell as UserStatusCell_389445e7208fed05ce1d82f37e154c05 } fro
 import { ResendInvite as ResendInvite_d7a2e4d82d5d5abc7b6648c81796be4f } from '../../../components/admin/ResendInvite'
 import { AccountActions as AccountActions_b564369a058367a481e030d85bf60b21 } from '../../../components/admin/AccountActions'
 import { DiscoverabilityControl as DiscoverabilityControl_ffff8065df5546cd8c7f45aaa1da9773 } from '../../../components/admin/DiscoverabilityControl'
+import { EmailCell as EmailCell_fc15b2d6951af6e0e162e6e3a8a42745 } from '../../../components/admin/EmailCell'
 import { UserListFilters as UserListFilters_6d4a935b9cb4205620416ca99a2c0ccd } from '../../../components/admin/UserListFilters'
 import { WorkflowPanel as WorkflowPanel_2f4e09647b17ee01f091b0106a1ed65d } from '../../../components/admin/WorkflowPanel'
 import { RscEntryLexicalCell as RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
@@ -30,6 +31,7 @@ import { UnderlineFeatureClient as UnderlineFeatureClient_e70f5e05f09f93e00b997e
 import { BoldFeatureClient as BoldFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { ItalicFeatureClient as ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { GatedPublishButton as GatedPublishButton_39791e1f6477a5e2bc48a24263a87e83 } from '../../../components/admin/GatedPublishButton'
+import { AltCell as AltCell_524999cebc76327af7a17d295de4ec17 } from '../../../components/admin/AltCell'
 import { AdminAvatar as AdminAvatar_ff2b3aef4ce7bf470d100ee3d53f4ed9 } from '../../../components/admin/Avatar'
 import { Icon as Icon_dfe4008080d895d460898c3a6155e9ba } from '../../../components/admin/Icon'
 import { Logo as Logo_91a09b539d3c86b0aebf520e7564ce08 } from '../../../components/admin/Logo'
@@ -48,6 +50,7 @@ export const importMap = {
   "/components/admin/ResendInvite#ResendInvite": ResendInvite_d7a2e4d82d5d5abc7b6648c81796be4f,
   "/components/admin/AccountActions#AccountActions": AccountActions_b564369a058367a481e030d85bf60b21,
   "/components/admin/DiscoverabilityControl#DiscoverabilityControl": DiscoverabilityControl_ffff8065df5546cd8c7f45aaa1da9773,
+  "/components/admin/EmailCell#EmailCell": EmailCell_fc15b2d6951af6e0e162e6e3a8a42745,
   "/components/admin/UserListFilters#UserListFilters": UserListFilters_6d4a935b9cb4205620416ca99a2c0ccd,
   "/components/admin/WorkflowPanel#WorkflowPanel": WorkflowPanel_2f4e09647b17ee01f091b0106a1ed65d,
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalCell": RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e,
@@ -74,6 +77,7 @@ export const importMap = {
   "@payloadcms/richtext-lexical/client#BoldFeatureClient": BoldFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@payloadcms/richtext-lexical/client#ItalicFeatureClient": ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "/components/admin/GatedPublishButton#GatedPublishButton": GatedPublishButton_39791e1f6477a5e2bc48a24263a87e83,
+  "/components/admin/AltCell#AltCell": AltCell_524999cebc76327af7a17d295de4ec17,
   "/components/admin/Avatar#AdminAvatar": AdminAvatar_ff2b3aef4ce7bf470d100ee3d53f4ed9,
   "/components/admin/Icon#Icon": Icon_dfe4008080d895d460898c3a6155e9ba,
   "/components/admin/Logo#Logo": Logo_91a09b539d3c86b0aebf520e7564ce08,
