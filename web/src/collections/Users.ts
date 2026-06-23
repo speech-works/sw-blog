@@ -10,8 +10,10 @@ import {
 import { auditUsersChange, auditUsersDelete } from "../hooks/audit";
 import {
   activateOnPasswordSet,
+  enforceNonEmptyName,
   guardForgotPasswordActivation,
   inviteHandler,
+  lockEmailForNonAdmins,
   resendInviteHandler,
 } from "../hooks/invite";
 import { resetPasswordEmail } from "../lib/authEmail";
@@ -33,8 +35,11 @@ export const Users: CollectionConfig = {
   },
   admin: {
     useAsTitle: "name",
-    defaultColumns: ["name", "email", "roles"],
+    defaultColumns: ["name", "email", "roles", "accountActivated"],
     group: "People",
+    components: {
+      beforeListTable: ["/components/admin/UserListFilters#UserListFilters"],
+    },
   },
   access: {
     // Editors/admins see everyone. An author sees: their own profile; anyone who's
@@ -64,17 +69,47 @@ export const Users: CollectionConfig = {
   ],
   hooks: {
     beforeOperation: [allowForgotPasswordEmailSend, guardForgotPasswordActivation],
-    beforeChange: [computeDiscoverability],
+    beforeChange: [enforceNonEmptyName, lockEmailForNonAdmins, computeDiscoverability],
     afterChange: [auditUsersChange],
     afterOperation: [activateOnPasswordSet],
     afterRead: [stripPrivateUserFields],
     afterDelete: [auditUsersDelete],
   },
   fields: [
+    // Warning shown only on the Create New page (hidden on edit pages).
+    {
+      name: "createWarning",
+      type: "ui",
+      admin: {
+        components: {
+          Field: "/components/admin/CreateUserWarning#CreateUserWarning",
+        },
+      },
+    },
+
+    // Email is the login identity. Declared here (Payload still treats it as the
+    // auth email) only to attach field access: a non-admin can't change their own
+    // email — a self-service change to a wrong address would lock them out with no
+    // recovery. Field access renders it read-only in the UI AND blocks the write;
+    // lockEmailForNonAdmins is the server-side defense-in-depth. Admins can edit it.
+    {
+      name: "email",
+      type: "email",
+      access: { update: isAdminField },
+      admin: {
+        description: "The login address. Only an administrator can change this.",
+      },
+    },
+
     // --- public byline profile ---
-    // Optional: an invite may carry only an email. The invited person fills this
-    // in when they complete their profile after setting a password.
-    { name: "name", type: "text" },
+    // Nullable in the schema (so system/partial writes needn't carry it), but the
+    // enforceNonEmptyName hook rejects an empty value whenever a name IS written —
+    // so it can't be cleared once set, and invites always supply one.
+    {
+      name: "name",
+      type: "text",
+      admin: { description: "The public byline name. Can't be left empty." },
+    },
     {
       name: "credentials",
       type: "text",
@@ -96,6 +131,9 @@ export const Users: CollectionConfig = {
     {
       name: "accountActivated",
       type: "checkbox",
+      // "Status" is used as the list-column header; the sidebar already has its
+      // own description so the rename only benefits the list view.
+      label: "Status",
       defaultValue: false,
       // System-set: flipped to true by the activateOnPasswordSet hook the first
       // time the invited user sets a password. Never editable by hand.
@@ -104,11 +142,16 @@ export const Users: CollectionConfig = {
         readOnly: true,
         position: "sidebar",
         description: "Becomes active once the invited user sets their password.",
+        // Custom Cell turns the raw boolean into a three-tier status badge.
+        components: {
+          Cell: "/components/admin/UserStatusCell#UserStatusCell",
+        },
       },
     },
     {
       // Live invitation status + a one-click "Resend invitation" button (shown
-      // only while the account is still pending).
+      // only while the account is still pending). The component renders its own
+      // "Account status" heading so no extra label is needed.
       name: "inviteStatus",
       type: "ui",
       admin: {

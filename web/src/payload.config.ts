@@ -62,8 +62,13 @@ export default buildConfig({
         Logo: "/components/admin/Logo#Logo",
         Icon: "/components/admin/Icon#Icon",
       },
-      // Login-time "review queue" on the dashboard.
-      beforeDashboard: ["/components/admin/Notifications#Notifications"],
+      // Login-time dashboard panels (rendered in order, top to bottom).
+      beforeDashboard: [
+        // Profile completion nudge for newly-activated users.
+        "/components/admin/ProfileCompleteGuide#ProfileCompleteGuide",
+        // Review queue — what needs attention right now.
+        "/components/admin/Notifications#Notifications",
+      ],
       // "Invite a user" entry in the nav → the email-only invite screen.
       afterNavLinks: ["/components/admin/InviteNavLink#InviteNavLink"],
       views: {

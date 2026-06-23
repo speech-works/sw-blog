@@ -150,6 +150,9 @@ export interface User {
   roles?: ('admin' | 'editor' | 'author' | 'reviewer')[] | null;
   updatedAt: string;
   createdAt: string;
+  /**
+   * The login address. Only an administrator can change this.
+   */
   email: string;
   resetPasswordToken?: string | null;
   resetPasswordExpiration?: string | null;

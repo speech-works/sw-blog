@@ -17,11 +17,12 @@ export default function PostArticle({ post }: { post: Post }) {
   const authorInitial = post.author?.name?.trim().charAt(0).toUpperCase() ?? "";
   const minutes = readingTime(post.body);
   // Dereferenced references can be null (a deleted/missing author, or an empty
-  // slot added while editing), so drop nulls before reading any fields.
+  // slot added while editing), and a user may not have set a name yet — drop both
+  // so the byline never renders an empty name.
   const authors = [
     ...(post.author ? [post.author] : []),
     ...(post.coAuthors ?? []),
-  ].filter(Boolean);
+  ].filter((a) => Boolean(a?.name));
   const coAuthorNames = joinNames(
     (post.coAuthors ?? []).filter(Boolean).map((a) => a.name),
   );

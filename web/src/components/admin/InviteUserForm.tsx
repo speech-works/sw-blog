@@ -56,37 +56,52 @@ export const InviteUserForm: React.FC = () => {
       const body = await res.json().catch(() => ({}));
 
       if (!res.ok || !body?.ok) {
+        // 409 = email belongs to an already-active account; surface a link to that user.
+        const conflictLink =
+          res.status === 409 && body?.id
+            ? { href: `/admin/collections/users/${body.id}`, text: "View their profile" }
+            : undefined;
         setStatus({
           tone: "error",
           message: body?.message ?? "Something went wrong. Please try again.",
+          link: conflictLink,
         });
         return;
       }
 
       const sentTo = body.email ?? email.trim();
       const userLink = body.id
-        ? { href: `/admin/collections/users/${body.id}`, text: "Open the user" }
+        ? { href: `/admin/collections/users/${body.id}`, text: "Open user record" }
         : undefined;
+      const wasResent = body.resent === true;
 
       if (body.emailSent) {
         setStatus({
           tone: "success",
-          message: `Invitation sent to ${sentTo}.`,
+          message: wasResent
+            ? `${sentTo} already had a pending invite. A fresh 48-hour link has been sent.`
+            : `Invitation sent to ${sentTo}.`,
           link: userLink,
         });
-        setEmail("");
-        setName("");
-        setRole("author");
+        if (!wasResent) {
+          setEmail("");
+          setName("");
+          setRole("author");
+        }
       } else if (body.reason === "not-configured") {
         setStatus({
           tone: "warning",
-          message: `User created, but email isn't set up in this environment, so no invitation was delivered. Configure SMTP, then use “Resend invitation” on the user.`,
+          message: wasResent
+            ? `A fresh link was generated but email isn't set up in this environment, so nothing was delivered. Configure SMTP and try again.`
+            : `User created, but email isn't set up in this environment, so no invitation was delivered. Configure SMTP, then use "Resend invitation" on the user.`,
           link: userLink,
         });
       } else {
         setStatus({
           tone: "warning",
-          message: `User created, but the invitation email failed to send. Use “Resend invitation” on the user to try again.`,
+          message: wasResent
+            ? `A fresh link was generated but the email failed to send. Please try again.`
+            : `User created, but the invitation email failed to send. Use "Resend invitation" on the user to try again.`,
           link: userLink,
         });
       }
@@ -119,14 +134,15 @@ export const InviteUserForm: React.FC = () => {
 
       <div style={{ marginBottom: 18 }}>
         <label style={labelStyle} htmlFor="invite-name">
-          Name <span style={{ opacity: 0.6, fontWeight: 400 }}>(optional)</span>
+          Name <span style={{ color: "#dc2626" }}>*</span>
         </label>
         <input
           id="invite-name"
           type="text"
+          required
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Used to personalise the invitation email"
+          placeholder="Full name of the person being invited"
           style={inputStyle}
         />
       </div>

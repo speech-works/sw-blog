@@ -3,11 +3,13 @@ import { APIError } from "payload";
 import type {
   BasePayload,
   CollectionAfterOperationHook,
+  CollectionBeforeChangeHook,
   CollectionBeforeOperationHook,
   PayloadHandler,
 } from "payload";
 import { INVITE_EMAIL_SUBJECT, inviteEmail } from "../lib/authEmail";
 import { userIsAdmin } from "../access/roles";
+import { auditUserInvite } from "./audit";
 
 // Invitations reuse Payload's reset-password token machinery: we mint a token,
 // stash it on the user (resetPasswordToken/Expiration) with a 48h expiry, and
@@ -74,33 +76,58 @@ export const issueInviteAndEmail = async (
   }
 };
 
-// When an invited user sets their password via the reset page, mark the account
-// active so normal forgot-password works from then on.
+// Flip accountActivated to true for a user by id, no-op if already active.
+const activateUser = async (
+  req: Parameters<CollectionAfterOperationHook>[0]["req"],
+  id: string | number,
+  currentActivated: unknown,
+): Promise<void> => {
+  if (currentActivated === true) return;
+  try {
+    await req.payload.update({
+      collection: "users",
+      id,
+      overrideAccess: true,
+      depth: 0,
+      data: { accountActivated: true },
+    });
+  } catch (error) {
+    console.error("[sw-blog] account activation flag update failed:", error);
+  }
+};
+
+// Mark an account active when a password is set:
+//  - resetPassword  → invited user clicks the 48h link and sets their password
+//  - create (no isInviteCreate flag) → first-admin via /admin/create-first-user
+//    or admin using the default Users → Create form (both supply a real password)
+//
+// Invite-created accounts are excluded from the create path: inviteHandler sets
+// req.context.isInviteCreate = true before calling payload.create so the random
+// placeholder password doesn't count as "account set up".
 export const activateOnPasswordSet: CollectionAfterOperationHook<"users"> = async ({
   operation,
   result,
   req,
 }) => {
-  if (operation !== "resetPassword") return result;
-
-  const payload = result as { user?: { id?: unknown; accountActivated?: unknown } };
-  const user = payload?.user;
-  const id = user?.id;
-  if (
-    (typeof id === "number" || typeof id === "string") &&
-    user?.accountActivated !== true
-  ) {
-    try {
-      await req.payload.update({
-        collection: "users",
-        id,
-        overrideAccess: true,
-        depth: 0,
-        data: { accountActivated: true },
-      });
-    } catch (error) {
-      console.error("[sw-blog] account activation flag update failed:", error);
+  if (operation === "resetPassword") {
+    // result shape: { user: { id, accountActivated, ... } }
+    const user = (result as { user?: { id?: unknown; accountActivated?: unknown } })
+      ?.user;
+    const id = user?.id;
+    if (typeof id === "number" || typeof id === "string") {
+      await activateUser(req, id, user?.accountActivated);
     }
+    return result;
+  }
+
+  if (operation === "create" && !req.context?.isInviteCreate) {
+    // result is the created user document
+    const created = result as { id?: unknown; accountActivated?: unknown };
+    const id = created?.id;
+    if (typeof id === "number" || typeof id === "string") {
+      await activateUser(req, id, created?.accountActivated);
+    }
+    return result;
   }
 
   return result;
@@ -138,6 +165,49 @@ export const guardForgotPasswordActivation: CollectionBeforeOperationHook = asyn
   return args;
 };
 
+// A name must never be SAVED empty. We allow it to be absent (system/partial
+// updates that don't touch it — activation, token mint, discoverability — and
+// programmatic creates), but the moment a name is part of the write we trim it
+// and reject an empty/whitespace value. This keeps the public byline and the
+// Users list free of blank "<No Name>" rows, and stops anyone clearing their
+// name on the profile form. Runs on create + update.
+export const enforceNonEmptyName: CollectionBeforeChangeHook = ({ data }) => {
+  const d = data as Record<string, unknown>;
+  if ("name" in d) {
+    const trimmed = typeof d.name === "string" ? d.name.trim() : "";
+    if (!trimmed) {
+      throw new APIError("Please enter a name — it can't be empty.", 400);
+    }
+    d.name = trimmed; // normalize: store the trimmed value
+  }
+  return data;
+};
+
+// Prevent non-admins from changing their own email address. Email is the login
+// key — a self-service change to a non-existent address causes instant lockout
+// with no recovery path. Admins can still update it (e.g. when someone switches
+// employer or email provider). The check is on the update operation only; create
+// operations (invite flow, first-admin) are unaffected.
+export const lockEmailForNonAdmins: CollectionBeforeChangeHook = async ({
+  data,
+  req,
+  operation,
+  originalDoc,
+}) => {
+  if (
+    operation === "update" &&
+    "email" in data &&
+    data.email !== originalDoc?.email &&
+    !userIsAdmin(req.user)
+  ) {
+    throw new APIError(
+      "Your email address can only be changed by an administrator. Please contact them if you need to update it.",
+      403,
+    );
+  }
+  return data;
+};
+
 // --- custom endpoints (mounted under /api/users) --------------------------------
 
 const json = (body: unknown, status = 200): Response =>
@@ -170,6 +240,9 @@ export const inviteHandler: PayloadHandler = async (req) => {
   if (!email || !email.includes("@")) {
     return json({ ok: false, message: "Please enter a valid email address." }, 400);
   }
+  if (!name) {
+    return json({ ok: false, message: "Please enter the person's name." }, 400);
+  }
   if (!(VALID_ROLES as readonly string[]).includes(role)) {
     return json({ ok: false, message: "Please choose a designation for this person." }, 400);
   }
@@ -189,9 +262,16 @@ export const inviteHandler: PayloadHandler = async (req) => {
 
   if (found) {
     if (found.accountActivated === true) {
-      return json({ ok: false, message: "An active account already uses this email." }, 409);
+      return json(
+        { ok: false, message: "An active account already uses this email.", id: found.id },
+        409,
+      );
     }
     const result = await issueInviteAndEmail(payload, found);
+    await auditUserInvite(req, found as Record<string, unknown>, {
+      resent: true,
+      emailSent: result.emailSent,
+    });
     return json({
       ok: true,
       id: found.id,
@@ -204,6 +284,10 @@ export const inviteHandler: PayloadHandler = async (req) => {
 
   let created;
   try {
+    // Flag the request so activateOnPasswordSet skips this creation — the random
+    // placeholder password must NOT count as "account set up". Activation happens
+    // when the invited user clicks the link and uses /admin/reset/{token}.
+    req.context.isInviteCreate = true;
     created = await payload.create({
       collection: "users",
       req,
@@ -214,6 +298,7 @@ export const inviteHandler: PayloadHandler = async (req) => {
         password: crypto.randomBytes(32).toString("hex"),
       },
     });
+    req.context.isInviteCreate = false;
   } catch (error) {
     console.error("[sw-blog] invite create failed:", error);
     const message =
@@ -224,6 +309,10 @@ export const inviteHandler: PayloadHandler = async (req) => {
   }
 
   const result = await issueInviteAndEmail(payload, created as unknown as InviteUser);
+  await auditUserInvite(req, created as unknown as Record<string, unknown>, {
+    resent: false,
+    emailSent: result.emailSent,
+  });
   return json({
     ok: true,
     id: (created as { id: unknown }).id,
@@ -265,6 +354,10 @@ export const resendInviteHandler: PayloadHandler = async (req) => {
   }
 
   const result = await issueInviteAndEmail(payload, user as unknown as InviteUser);
+  await auditUserInvite(req, user as unknown as Record<string, unknown>, {
+    resent: true,
+    emailSent: result.emailSent,
+  });
   return json({
     ok: true,
     email: (user as { email?: unknown }).email,
