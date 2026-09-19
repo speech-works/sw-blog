@@ -69,7 +69,7 @@ export function SiteFooter() {
         <a href={`${SITE}/programs/`}>Programs</a>
         <a href={`${SITE}/about/`}>About</a>
         <Link href="/">Blog</Link>
-        <a href="mailto:contact@speechworks.in">Contact</a>
+        <a href="mailto:contact@speechworks.app">Contact</a>
         <a href={`${SITE}/privacy/`}>Privacy</a>
         <a href={`${SITE}/account/delete/`}>Delete account</a>
       </nav>

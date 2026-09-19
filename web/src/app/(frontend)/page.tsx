@@ -61,7 +61,7 @@ export default async function BlogIndexPage() {
           "@type": "ImageObject",
           url: `${marketingUrl}/assets/logo.png`,
         },
-        email: "contact@speechworks.in",
+        email: "contact@speechworks.app",
         description:
           "Support for people who stutter and stammer, focused on confident everyday communication and a healthier relationship with stuttering rather than fluency alone.",
       },
@@ -104,7 +104,7 @@ export default async function BlogIndexPage() {
             Do you stutter, or work in speech therapy? We would love to publish
             your writing.{" "}
             <a
-              href="mailto:contact@speechworks.in?subject=Writing%20for%20the%20Speechworks%20blog"
+              href="mailto:contact@speechworks.app?subject=Writing%20for%20the%20Speechworks%20blog"
               className="ink-link"
             >
               Write with us
