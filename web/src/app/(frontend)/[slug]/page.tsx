@@ -64,13 +64,8 @@ export async function generateMetadata({
 }
 
 const BackLink = () => (
-  <Link
-    href="/"
-    className="group inline-flex items-center gap-2 rounded-full border border-brand/20 bg-white/70 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-brand-600 shadow-sm backdrop-blur transition-colors hover:border-brand/40 hover:text-brand"
-  >
-    <span aria-hidden className="transition-transform group-hover:-translate-x-0.5">
-      ←
-    </span>
+  <Link href="/" className="back-link">
+    <span aria-hidden>←</span>
     All articles
   </Link>
 );
@@ -97,10 +92,16 @@ export default async function PostPage({
     const doc = user ? await getPostDoc(slug, { draft: true, user }) : null;
     if (!doc) notFound();
     return (
-      <main className="relative mx-auto max-w-3xl px-5 pt-12 sm:px-6 lg:max-w-6xl">
-        <PreviewBanner />
-        <BackLink />
-        <LivePostArticle initialDoc={doc} />
+      <main id="main-content">
+        <LivePostArticle
+          initialDoc={doc}
+          lead={
+            <>
+              <PreviewBanner />
+              <BackLink />
+            </>
+          }
+        />
       </main>
     );
   }
@@ -150,13 +151,12 @@ export default async function PostPage({
   };
 
   return (
-    <main className="relative mx-auto max-w-3xl px-5 pt-12 sm:px-6 lg:max-w-6xl">
+    <main id="main-content">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <BackLink />
-      <PostArticle post={post} />
+      <PostArticle post={post} lead={<BackLink />} />
     </main>
   );
 }

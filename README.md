@@ -28,9 +28,8 @@ Next.js app on Netlify
 
 Everything is one deployable. Payload mounts `/admin` + its REST/GraphQL API inside
 the Next app; public pages read content via Payload's in-process Local API (no extra
-HTTP call). Text lives in Neon; images/audio live in R2. The navbar/footer come from
-the shared [`@speech-works/web-chrome`](../web-chrome) package so the blog and the
-marketing site can't visually drift.
+HTTP call). Text lives in Neon; images/audio live in R2. The header, footer and
+theme mirror sw-landing (see "Site chrome and theme" below).
 
 ## Why this setup
 
@@ -153,7 +152,6 @@ Set these in the **Netlify dashboard** → Site configuration → Environment va
 | `SMTP_PASS` | Brevo SMTP key/password |
 | `EMAIL_FROM_ADDRESS` | Password reset sender — `no-reply@speechworks.app` |
 | `EMAIL_FROM_NAME` | Password reset sender name — `Speechworks Blog` |
-| `NODE_AUTH_TOKEN` | GitHub PAT (`read:packages`) to install `@speech-works/web-chrome` |
 | `NEXT_PUBLIC_SITE_URL` | This blog's origin — `https://blog.speechworks.app` |
 | `NEXT_PUBLIC_MARKETING_URL` | Marketing site origin — `https://speechworks.app` |
 | `NEXT_PUBLIC_BASE_PATH` | Leave empty (blog is at the domain root) |
@@ -183,13 +181,21 @@ The server hard-blocks adding non-discoverable users as co-authors (editors are 
 `npm run payload -- migrate:create --name <description>` to generate a migration file,
 commit it with the schema change, and push. Netlify applies it on the next deploy.
 
-## Shared navbar / footer
+## Site chrome and theme
 
-The chrome lives in [`@speech-works/web-chrome`](../web-chrome) (GitHub Packages),
-consumed by both `web/` and sw-landing. Edit + publish that package, bump the dep in
-both consumers, redeploy. `web/src/components/SiteChrome.tsx` wraps it; `globals.css`
-imports its tokens + a `@source` line for Tailwind. Installing needs a GitHub PAT with
-`read:packages` as `NODE_AUTH_TOKEN`.
+The public blog copies speechworks.app's look: orange header band, speech-bubble
+edge, ink-outlined cards, black download band and footer. No shared package; the
+pieces are rebuilt here:
+
+- `web/src/components/SiteChrome.tsx`: header, footer, `SectionEdge`, `DownloadBand`
+  (same markup and class names as sw-landing's `Navbar`, `Footer`, `SectionEdge`,
+  `DownloadSection`). Nav links other than Blog point at `NEXT_PUBLIC_MARKETING_URL`.
+- `web/src/app/globals.css`: the theme tokens and every public-page style. Values are
+  copied from sw-landing's `globals.css` + `home.css`.
+- `web/public/brand/mark.svg`, `web/public/avatars/*.svg`, `web/src/app/fonts/`: copied
+  from sw-landing.
+
+When the marketing site's look changes, port the same change into these files.
 
 ## DNS
 

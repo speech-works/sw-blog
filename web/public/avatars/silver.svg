@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 310" fill="none" stroke="#242329" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" role="img" aria-labelledby="silver-warm-title silver-warm-description"><title id="silver-warm-title">Speechworks silver avatar</title><desc id="silver-warm-description">Silver waves, round glasses and a shawl collar; warm expression. Head and collar only.</desc><defs>
+    <linearGradient id="silver-warm-skin" x1="84" y1="144" x2="251" y2="234" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F1D3BA" />
+      <stop offset=".55" stop-color="#F3D9C4" />
+      <stop offset="1" stop-color="#F5DECD" />
+    </linearGradient>
+    <linearGradient id="silver-warm-hair" x1="151" y1="43" x2="158" y2="133" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#493225" />
+      <stop offset=".5" stop-color="#533B2B" />
+      <stop offset="1" stop-color="#33251E" />
+    </linearGradient>
+    <linearGradient id="silver-warm-mint" x1="155" y1="20" x2="162" y2="216" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#B5F3D6" />
+      <stop offset=".55" stop-color="#AEF0D2" />
+      <stop offset="1" stop-color="#ABEDCF" />
+    </linearGradient>
+    <linearGradient id="silver-warm-ear-cushion" x1="35" y1="147" x2="62" y2="200" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#309775" />
+      <stop offset="1" stop-color="#349778" />
+    </linearGradient>
+    <linearGradient id="silver-warm-collar-fabric" x1="99" y1="244" x2="112" y2="301" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#18344F" />
+      <stop offset="1" stop-color="#1D3959" />
+    </linearGradient>
+    <clipPath id="silver-warm-hair-boundary">
+      <path d="M60.5 131.2C68.5 80.1 106.6 44 158.6 44.3C210.7 44.5 247.6 79.4 255.4 131.1C251.6 116.7 232 107 212.6 106.6C195.2 105.5 177.9 111 158.3 113.8C139 117 119.2 116.9 99.2 118.3C82 119.7 69.5 124.2 60.5 131.2Z" />
+    </clipPath>
+  <clipPath id="silver-warm-head-clip"><path d="M61 130.5C63 83 104 44 159 44C212 44 252 82 255 129L263.8 204.5C265 218.8 261.2 233.7 255.1 240.6C235 251.5 207.9 258.5 179.9 264.2C167.5 266.7 164.8 269.8 160.3 275C158.7 277.4 156.1 277.2 154.1 275C150.9 271 147 267.3 135.3 264.8C101.9 257.7 76.3 250.6 58.4 241.8C50.3 237.4 48.8 227.7 48.1 214.7L50.5 155Z"/></clipPath><clipPath id="silver-warm-confident-eyes"><path d="M90 158L238 148L238 199L90 199Z"/></clipPath><clipPath id="silver-warm-soft-lids"><path d="M90 160Q114 149 139 157L139 199L90 199ZM185 157Q210 145 236 153L236 199L185 199Z"/></clipPath></defs>
+
+  
+  <g id="silver-warm-hair-back"><path d="M48 235C25 237 31 213 35 196C15 162 26 124 37 109C27 73 61 41 90 41C115 17 150 25 167 26C207 14 250 50 260 79C286 95 289 126 277 149C292 182 282 216 268 238L252 251L56 249Z" fill="#D6D5CF" stroke-width="3.5" /><path d="M42 108C57 88 76 81 89 84M257 115C267 136 263 155 269 174" fill="none" stroke-width="3" stroke="#A6AAA6"/></g><g id="silver-warm-head">
+    <path d="M61 130.5C63 83 104 44 159 44C212 44 252 82 255 129L263.8 204.5C265 218.8 261.2 233.7 255.1 240.6C235 251.5 207.9 258.5 179.9 264.2C167.5 266.7 164.8 269.8 160.3 275C158.7 277.4 156.1 277.2 154.1 275C150.9 271 147 267.3 135.3 264.8C101.9 257.7 76.3 250.6 58.4 241.8C50.3 237.4 48.8 227.7 48.1 214.7L50.5 155Z" fill="url(#silver-warm-skin)" stroke-width="4" />
+  </g>
+
+  <g id="silver-warm-hair-front"><path d="M47 144C44 88 82 38 144 37C210 31 261 69 268 142C251 136 241 120 233 99C211 115 193 113 177 88C157 108 134 112 119 96C108 120 90 133 71 132L59 148Z" fill="#D6D5CF" stroke-width="3.5" /><path d="M64 125C91 120 107 91 112 69M183 54C202 73 224 81 249 84" fill="none" stroke-width="3" stroke="#AFB3AD"/></g><g id="silver-warm-collar"><path d="M55 245C80 255 111 262 139 268C150 274 155 290 151 306C115 304 69 291 42 276Z" fill="#E2D1A8" stroke-width="3.5" /><path d="M256 245C222 257 194 265 175 269C159 276 157 291 151 306C194 306 239 292 269 277Z" fill="#E9DABC" stroke-width="3.5" /><circle cx="168" cy="294" r="4.3" fill="#A99168"/></g><g id="silver-warm-age-details"><path d="M141 132Q158 127 175 131M81 180L75 184M82 187L77 192M241 178L247 181M242 185L247 190M131 225Q126 236 132 243M191 223Q198 233 194 241" fill="none" stroke-width="1.7" stroke="#71584B" opacity=".55"/></g><g id="silver-warm-expression-warm"><g id="silver-warm-eyebrows"><path d="M100 129Q111 123 124 128" fill="none" stroke-width="4.5" /><path d="M198 130Q211 124 223 129" fill="none" stroke-width="4.5" /></g><g id="silver-warm-eyes">
+      <path id="silver-warm-eye-white-left" d="M114.5 143.1C125.2 143 134.4 153.4 135.5 166.6C136.7 180.6 128.6 190.5 117.7 191.7C105.6 193.4 94 184.7 93.3 170.8C92.5 157.7 102.1 143.7 114.5 143.1Z" fill="#FEFEFD" stroke-width="3.5" />
+      <g transform="translate(-9 2)"><path d="M123.7 153.8C128.5 152.2 132.3 154.8 133.8 158.2C136.4 166.2 135.4 174.6 132 180.1C130.8 182.1 129 183.8 125.9 184.3C118.7 184.9 114.8 177.4 114.6 167.7L114.5 164.2C118.6 164.3 117.9 160 115.4 159.5C117.1 156.9 120.1 154.7 123.7 153.8Z" fill="#19191F" stroke="none" /></g>
+      <path id="silver-warm-eye-white-right" d="M211.1 140.8C223.5 141 231.6 153 230.5 167.4C229.5 181.7 221.6 191.4 210.1 191.5C197.6 191.7 189 182.1 189.1 169C189 155.7 198.6 140.2 211.1 140.8Z" fill="#FEFEFD" stroke-width="3.5" />
+      <g transform="translate(-9 2)"><path d="M222 152.1C224.4 152 227.2 153.2 228.8 155.4C231.2 164 229.9 174.5 225.4 181.1C224.9 181.4 224 182.2 222.3 182.3C214.6 182.6 210 174.8 210.1 166.1L210.2 161.2C214.1 161.4 214 157.5 211.7 156.7C214.1 153.8 217.8 152.2 222 152.1Z" fill="#19191F" stroke="none" /></g>
+    </g>
+    <path d="M142 218C151 221 169 221 181 216C177 229 170 233 161 232C153 232 146 228 142 218Z" fill="#262229" stroke-width="2.5" /><path d="M148 222Q162 226 176 221" fill="none" stroke-width="3.5" stroke="#FFF8ED"/></g><g id="silver-warm-eyewear"><ellipse cx="114" cy="168" rx="28" ry="31" stroke-width="3.2"/><ellipse cx="210" cy="166" rx="28" ry="31" stroke-width="3.2"/><path d="M142 164C153 158 171 158 182 164M85 165L65 156M239 161L251 153" fill="none" stroke-width="3.2" /></g></svg>

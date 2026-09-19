@@ -5,14 +5,15 @@ import {
 import type { Media } from "@/payload-types";
 import type { LexicalBody } from "@/lib/types";
 
-// Render the Lexical body to React, hand-mapped to brand tokens so long-form posts
-// read like the rest of the site (app-title headings, brand links, warm body text).
+// Render the Lexical body to React. Typography comes from `.prose-body` in
+// globals.css (ink headings, lime pull quotes, orange-underlined links), so posts
+// read like the rest of speechworks.app.
 // Default converters handle inline marks (bold/italic/code); we override the
 // block-level nodes + links + in-text images.
 const converters: JSXConvertersFunction = ({ defaultConverters }) => ({
   ...defaultConverters,
   paragraph: ({ node, nodesToJSX }) => (
-    <p className="mt-5 text-[17px] leading-relaxed text-gray-700 md:text-lg">
+    <p>
       {nodesToJSX({ nodes: node.children })}
     </p>
   ),
@@ -20,38 +21,36 @@ const converters: JSXConvertersFunction = ({ defaultConverters }) => ({
     const children = nodesToJSX({ nodes: node.children });
     if (node.tag === "h2")
       return (
-        <h2 className="mt-12 text-2xl font-bold tracking-tight text-app-title md:text-3xl">
+        <h2>
           {children}
         </h2>
       );
     if (node.tag === "h3")
       return (
-        <h3 className="mt-9 text-xl font-bold tracking-tight text-app-title md:text-2xl">
+        <h3>
           {children}
         </h3>
       );
     return (
-      <h4 className="mt-7 text-lg font-semibold tracking-tight text-app-title">
+      <h4>
         {children}
       </h4>
     );
   },
   quote: ({ node, nodesToJSX }) => (
-    <blockquote className="mt-7 border-l-4 border-brand bg-brand-50 px-6 py-4 text-lg italic text-app-title">
+    <blockquote>
       {nodesToJSX({ nodes: node.children })}
     </blockquote>
   ),
   list: ({ node, nodesToJSX }) => {
-    const cls =
-      "mt-5 space-y-2 pl-6 text-[17px] leading-relaxed text-gray-700 md:text-lg";
     if (node.tag === "ol")
       return (
-        <ol className={`list-decimal ${cls}`}>
+        <ol>
           {nodesToJSX({ nodes: node.children })}
         </ol>
       );
     return (
-      <ul className={`list-disc ${cls}`}>
+      <ul>
         {nodesToJSX({ nodes: node.children })}
       </ul>
     );
@@ -62,7 +61,7 @@ const converters: JSXConvertersFunction = ({ defaultConverters }) => ({
     return (
       <a
         href={url}
-        className="font-medium text-brand underline decoration-brand/30 underline-offset-2 transition-colors hover:text-brand-600"
+        className="ink-link"
         {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
       >
         {nodesToJSX({ nodes: node.children })}
@@ -87,18 +86,18 @@ const converters: JSXConvertersFunction = ({ defaultConverters }) => ({
           : value.sizes?.full;
     const src = variant?.url ?? value.url;
     return (
-      <figure className="mt-8">
+      <figure>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={src}
           alt={value.alt || ""}
           width={variant?.width ?? value.width ?? undefined}
           height={variant?.height ?? value.height ?? undefined}
-          className={`${sizeClass} h-auto rounded-2xl`}
+          className={sizeClass}
           loading="lazy"
         />
         {value.alt ? (
-          <figcaption className="mt-2 text-center text-sm text-app-muted">
+          <figcaption>
             {value.alt}
           </figcaption>
         ) : null}

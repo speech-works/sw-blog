@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getAllPosts } from "@/lib/queries";
 import { siteUrl, basePath, marketingUrl } from "@/lib/env";
 import PostCard from "@/components/PostCard";
+import { SectionEdge } from "@/components/SiteChrome";
 
 // Time-based ISR: the index re-renders at most once a minute, and the publish
 // webhook (/api/revalidate) refreshes it instantly. New posts never rebuild a repo.
@@ -86,50 +87,46 @@ export default async function BlogIndexPage() {
   };
 
   return (
-    <main className="relative mx-auto max-w-6xl px-5 pt-14 sm:px-6 lg:px-12">
+    <main id="main-content">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <header className="mx-auto max-w-2xl text-center">
-        <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand-600">
-          The Speechworks Blog
-        </p>
-        <h1 className="mt-4 text-4xl font-bold tracking-tight text-app-title md:text-5xl">
-          Voices on stuttering and stammering
-        </h1>
-        <p className="mt-5 text-lg leading-relaxed text-gray-600">
-          We write about stuttering and
-          stammering as something to live with and speak through, not something
-          to cure.
-        </p>
-        <p className="mt-6 text-base text-gray-600">
-          Do you stutter, or work in speech therapy? We would love to publish
-          your writing.{" "}
-          <a
-            href="mailto:contact@speechworks.in?subject=Writing%20for%20the%20Speechworks%20blog"
-            className="font-semibold text-brand-600 underline decoration-brand/30 underline-offset-2 transition-colors hover:text-brand"
-          >
-            Write with us
-          </a>
-          .
-        </p>
-      </header>
+      <div className="page-hero">
+        <header className="blog-intro section-wrap">
+          <p className="section-kicker">The Speechworks Blog</p>
+          <h1>Voices on stuttering and stammering.</h1>
+          <p className="blog-intro-copy">
+            We write about stuttering and stammering as something to live with
+            and speak through, not something to cure.
+          </p>
+          <p className="blog-intro-invite">
+            Do you stutter, or work in speech therapy? We would love to publish
+            your writing.{" "}
+            <a
+              href="mailto:contact@speechworks.in?subject=Writing%20for%20the%20Speechworks%20blog"
+              className="ink-link"
+            >
+              Write with us
+            </a>
+            .
+          </p>
+        </header>
+      </div>
+      <SectionEdge />
 
       {posts.length === 0 ? (
-        <div className="mx-auto mt-16 max-w-md rounded-3xl border border-dashed border-brand/30 bg-brand-50/50 p-10 text-center">
-          <p className="text-lg font-semibold text-app-title">
-            We are just getting started
-          </p>
-          <p className="mt-2 text-sm text-app-muted">
+        <div className="blog-empty">
+          <h2>We are just getting started.</h2>
+          <p>
             The first articles on stuttering, stammering, and speech therapy will
             appear here soon. If you would like to write one, get in touch.
           </p>
         </div>
       ) : (
-        <div className="mt-14 grid grid-cols-1 gap-7 sm:grid-cols-2 lg:grid-cols-3">
-          {posts.map((post) => (
-            <PostCard key={post.id} post={post} />
+        <div className="post-grid section-wrap">
+          {posts.map((post, i) => (
+            <PostCard key={post.id} post={post} index={i} />
           ))}
         </div>
       )}

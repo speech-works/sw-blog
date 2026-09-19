@@ -4,61 +4,54 @@ import { resolveImage } from "@/lib/media";
 import { byline, formatDate } from "@/lib/format";
 import RoleBadge from "./RoleBadge";
 
-export default function PostCard({ post }: { post: PostListItem }) {
+// Cards cycle through the site's program-card tones so the grid reads like the
+// program catalog on speechworks.app.
+const TONES = ["tone-blue", "tone-orange", "tone-purple", "tone-lime"];
+
+export default function PostCard({
+  post,
+  index = 0,
+}: {
+  post: PostListItem;
+  index?: number;
+}) {
   const cover = resolveImage(post.coverImage, "card")?.url ?? null;
 
   return (
     <Link
       href={`/${post.slug}`}
-      className="group flex flex-col overflow-hidden rounded-3xl border border-black/5 bg-app-card shadow-soft-orange transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover"
+      className={`post-card ${TONES[index % TONES.length]}`}
     >
       {cover ? (
-        <div className="aspect-[5/3] overflow-hidden">
+        <div className="post-card-cover">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={cover}
-            alt={post.title}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-            loading="lazy"
-          />
+          <img src={cover} alt={post.title} loading="lazy" />
         </div>
-      ) : (
-        <div className="aspect-[5/3] bg-gradient-to-br from-brand-50 to-brand-100" />
-      )}
+      ) : null}
 
-      <div className="flex flex-1 flex-col p-6">
+      <div className="post-card-body">
         {post.tags?.length ? (
-          <div className="mb-3 flex flex-wrap gap-2">
+          <div className="tag-list">
             {post.tags.slice(0, 2).map((tag) => (
-              <span
-                key={tag}
-                className="rounded-full bg-brand-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-brand-600"
-              >
+              <span key={tag} className="tag-pill">
                 {tag}
               </span>
             ))}
           </div>
         ) : null}
 
-        <h2 className="text-xl font-bold leading-snug tracking-tight text-app-title transition-colors group-hover:text-brand-600">
-          {post.title}
-        </h2>
+        <h2>{post.title}</h2>
 
         {post.excerpt ? (
-          <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-gray-600">
-            {post.excerpt}
-          </p>
+          <p className="post-card-excerpt">{post.excerpt}</p>
         ) : null}
 
-        <div className="mt-5 flex flex-wrap items-center gap-2 text-xs font-medium text-app-muted">
+        <div className="post-card-meta">
           {post.author?.name ? (
-            <span className="text-app-text">
-              {byline(post.author.name, post.author.credentials)}
-            </span>
-          ) : null}
-          {post.author?.role ? <RoleBadge role={post.author.role} /> : null}
-          {post.author?.name && post.publishedAt ? (
-            <span aria-hidden>·</span>
+            <div className="post-card-author">
+              <span>{byline(post.author.name, post.author.credentials)}</span>
+              {post.author.role ? <RoleBadge role={post.author.role} /> : null}
+            </div>
           ) : null}
           {post.publishedAt ? (
             <time dateTime={post.publishedAt}>
@@ -66,6 +59,9 @@ export default function PostCard({ post }: { post: PostListItem }) {
             </time>
           ) : null}
         </div>
+        <span className="post-card-read">
+          Read article <span aria-hidden>→</span>
+        </span>
       </div>
     </Link>
   );

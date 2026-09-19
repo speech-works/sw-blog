@@ -9,11 +9,9 @@ export default function AudioPlayer({
 }) {
   return (
     <div>
-      <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-brand-600">
-        {label}
-      </p>
+      <p className="audio-label">{label}</p>
       {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-      <audio controls preload="none" src={src} className="w-full">
+      <audio controls preload="none" src={src} className="audio-player">
         Your browser does not support the audio element.
       </audio>
     </div>

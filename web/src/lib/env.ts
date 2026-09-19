@@ -6,8 +6,8 @@
 export const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL || "https://blog.speechworks.app";
 
-// The marketing site origin. Used for shared-chrome assets (the logo) and the
-// nav/footer back-links, which live on the main site rather than this blog.
+// The marketing site origin. Used for the nav/footer back-links, which live on
+// the main site rather than this blog.
 export const marketingUrl =
   process.env.NEXT_PUBLIC_MARKETING_URL || "https://speechworks.app";
 

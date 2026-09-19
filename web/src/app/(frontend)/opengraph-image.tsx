@@ -3,7 +3,7 @@ import { ImageResponse } from "next/og";
 // Branded 1200x630 social card for the blog index — what people see when the
 // homepage is shared on X, LinkedIn, WhatsApp, etc. A real card (vs. a bare
 // link) lifts click-through, so it counts toward visibility, not just looks.
-// Colors mirror the shared @speech-works/web-chrome brand tokens.
+// Colors mirror the speechworks.app theme (orange band, ink, lime).
 export const alt =
   "The Speechworks Blog: voices from people who stutter and the SLPs beside them";
 export const size = { width: 1200, height: 630 };
@@ -19,7 +19,7 @@ export default function Image() {
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          backgroundColor: "#fffaf5",
+          backgroundColor: "#ff9657",
           padding: "80px",
           fontFamily: "sans-serif",
         }}
@@ -29,9 +29,7 @@ export default function Image() {
             display: "flex",
             fontSize: 26,
             fontWeight: 700,
-            letterSpacing: "0.2em",
-            textTransform: "uppercase",
-            color: "#d9692e",
+            color: "#141311",
           }}
         >
           The Speechworks Blog
@@ -41,8 +39,9 @@ export default function Image() {
             display: "flex",
             fontSize: 78,
             fontWeight: 800,
-            lineHeight: 1.05,
-            color: "#401b00",
+            lineHeight: 1.02,
+            letterSpacing: "-0.05em",
+            color: "#141311",
             maxWidth: 1000,
           }}
         >
@@ -53,16 +52,17 @@ export default function Image() {
             display: "flex",
             alignItems: "center",
             fontSize: 30,
-            color: "#8c7c73",
+            color: "#29231e",
           }}
         >
           <div
             style={{
               display: "flex",
-              width: 18,
-              height: 18,
+              width: 22,
+              height: 22,
               borderRadius: 9999,
-              backgroundColor: "#f28044",
+              border: "3px solid #141311",
+              backgroundColor: "#b9ee55",
               marginRight: 18,
             }}
           />

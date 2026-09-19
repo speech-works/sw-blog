@@ -1,16 +1,26 @@
 "use client";
+import type { ReactNode } from "react";
 import { resolveImage } from "@/lib/media";
 import { byline, formatDate, joinNames, readingTime } from "@/lib/format";
 import RichText from "@/components/RichText";
 import AuthorPanel from "@/components/AuthorPanel";
 import RoleBadge from "@/components/RoleBadge";
 import AudioPlayer from "@/components/AudioPlayer";
+import { SectionEdge } from "@/components/SiteChrome";
 import type { Post } from "@/lib/types";
 
-// The visible article (author rail + header + body + mobile footer). A client
-// component so it can re-render live during preview (driven by LivePostArticle);
-// on the public page it still server-renders, then hydrates.
-export default function PostArticle({ post }: { post: Post }) {
+// The visible article: the orange opening band (title + byline), the speech
+// edge, then the author rail + body + mobile author card. A client component so
+// it can re-render live during preview (driven by LivePostArticle); on the
+// public page it still server-renders, then hydrates. `lead` sits at the top of
+// the band (the back link, and the preview banner while previewing).
+export default function PostArticle({
+  post,
+  lead,
+}: {
+  post: Post;
+  lead?: ReactNode;
+}) {
   const cover = resolveImage(post.coverImage, "cover");
   const coverDims = cover ? { width: cover.width, height: cover.height } : null;
   const authorPhoto = resolveImage(post.author?.photo, "avatar")?.url ?? null;
@@ -33,58 +43,39 @@ export default function PostArticle({ post }: { post: Post }) {
   );
 
   return (
-    <div className="mt-8 lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-12">
-      {post.author?.name ? (
-        <AuthorPanel
-          name={post.author.name}
-          credentials={post.author.credentials}
-          role={post.author.role}
-          bio={post.author.bio}
-          photoUrl={authorPhoto}
-          audioUrl={post.audioUrl}
-          withNames={coAuthorNames || undefined}
-          className="hidden lg:block"
-        />
-      ) : (
-        <div className="hidden lg:block" aria-hidden />
-      )}
+    <article>
+      <div className="page-hero">
+        <header className="post-intro section-wrap">
+          {lead}
 
-      <article className="lg:max-w-3xl">
-        <header>
           {post.tags?.length ? (
-            <div className="mb-4 flex flex-wrap gap-2">
+            <div className="tag-list">
               {post.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="rounded-full bg-brand-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-brand-600"
-                >
+                <span key={tag} className="tag-pill">
                   {tag}
                 </span>
               ))}
             </div>
           ) : null}
 
-          <h1 className="text-3xl font-bold leading-tight tracking-tight text-app-title md:text-4xl">
-            {post.title}
-          </h1>
+          <h1>{post.title}</h1>
 
-          <div className="mt-5 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-sm">
+          <div className="post-byline">
             {authors.map((a, i) => (
-              <span
-                key={`${a.name}-${i}`}
-                className="inline-flex flex-wrap items-center gap-x-1.5"
-              >
-                {i > 0 ? <span className="text-app-muted">and</span> : null}
-                <span className="font-semibold text-app-title">{a.name}</span>
+              <span key={`${a.name}-${i}`} className="post-author">
+                {i > 0 ? <span>and</span> : null}
+                <strong>{a.name}</strong>
                 {a.credentials ? (
-                  <span className="text-app-muted">· {a.credentials}</span>
+                  <span className="post-byline-credentials">
+                    · {a.credentials}
+                  </span>
                 ) : null}
                 {a.role ? <RoleBadge role={a.role} /> : null}
               </span>
             ))}
           </div>
 
-          <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-app-muted">
+          <div className="post-meta">
             {post.publishedAt ? (
               <time dateTime={post.publishedAt}>
                 {formatDate(post.publishedAt)}
@@ -93,78 +84,87 @@ export default function PostArticle({ post }: { post: Post }) {
             {post.publishedAt ? <span aria-hidden>·</span> : null}
             <span>{minutes} min read</span>
             {peerLabel ? (
-              <>
-                <span aria-hidden>·</span>
-                <span>Peer reviewed by {peerLabel}</span>
-              </>
+              <span className="post-meta-peer">Peer reviewed by {peerLabel}</span>
             ) : null}
           </div>
         </header>
+      </div>
+      <SectionEdge />
 
-        {cover ? (
-          <div className="mt-8 overflow-hidden rounded-3xl">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={cover.url}
-              alt={post.title}
-              width={coverDims?.width}
-              height={coverDims?.height}
-              className="h-auto w-full"
-            />
-          </div>
-        ) : null}
-
-        <div className="mt-4">
-          <RichText data={post.body} />
-        </div>
-
+      <div className="post-layout section-wrap">
         {post.author?.name ? (
-          <footer className="mt-16 flex items-start gap-5 rounded-[1.75rem] border border-black/5 bg-app-card p-6 shadow-soft-orange sm:p-7 lg:hidden">
-            {authorPhoto ? (
-              // eslint-disable-next-line @next/next/no-img-element
+          <AuthorPanel
+            name={post.author.name}
+            credentials={post.author.credentials}
+            role={post.author.role}
+            bio={post.author.bio}
+            photoUrl={authorPhoto}
+            audioUrl={post.audioUrl}
+            withNames={coAuthorNames || undefined}
+          />
+        ) : (
+          <div className="author-rail-spacer" aria-hidden />
+        )}
+
+        <div className="post-body">
+          {cover ? (
+            <div className="post-cover">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={authorPhoto}
-                alt={post.author.name}
-                className="h-16 w-16 shrink-0 rounded-full object-cover ring-1 ring-black/5"
+                src={cover.url}
+                alt={post.title}
+                width={coverDims?.width}
+                height={coverDims?.height}
               />
-            ) : (
-              <span
-                aria-hidden
-                className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-brand-50 text-xl font-bold text-brand-600 ring-1 ring-black/5"
-              >
-                {authorInitial}
-              </span>
-            )}
-            <div className="min-w-0">
-              <p className="text-[11px] font-black uppercase tracking-[0.2em] text-brand-600">
-                About the author
-              </p>
-              <p className="mt-1.5 text-base font-bold text-app-title">
-                {post.author.name}
-              </p>
-              {post.author.credentials ? (
-                <p className="text-sm text-app-muted">{post.author.credentials}</p>
-              ) : null}
-              {coAuthorNames ? (
-                <p className="mt-1 text-sm text-app-muted">with {coAuthorNames}</p>
-              ) : null}
-              {post.author.role ? (
-                <RoleBadge role={post.author.role} className="mt-2" />
-              ) : null}
-              {post.author.bio ? (
-                <p className="mt-2 text-sm leading-relaxed text-app-muted">
-                  {post.author.bio}
-                </p>
-              ) : null}
-              {post.audioUrl ? (
-                <div className="mt-4">
-                  <AudioPlayer src={post.audioUrl} label="Listen to this article" />
-                </div>
-              ) : null}
             </div>
-          </footer>
-        ) : null}
-      </article>
-    </div>
+          ) : null}
+
+          <div className="prose-body">
+            <RichText data={post.body} />
+          </div>
+
+          {post.author?.name ? (
+            <footer className="author-card">
+              {authorPhoto ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={authorPhoto}
+                  alt={post.author.name}
+                  className="author-photo"
+                />
+              ) : (
+                <span aria-hidden className="author-photo author-initial">
+                  {authorInitial}
+                </span>
+              )}
+              <div>
+                <p className="section-kicker" style={{ marginBottom: 6 }}>
+                  About the author
+                </p>
+                <p className="author-name">{post.author.name}</p>
+                {post.author.credentials ? (
+                  <p className="author-detail">{post.author.credentials}</p>
+                ) : null}
+                {coAuthorNames ? (
+                  <p className="author-detail">with {coAuthorNames}</p>
+                ) : null}
+                {post.author.role ? <RoleBadge role={post.author.role} /> : null}
+                {post.author.bio ? (
+                  <p className="author-bio">{post.author.bio}</p>
+                ) : null}
+                {post.audioUrl ? (
+                  <div className="author-audio">
+                    <AudioPlayer
+                      src={post.audioUrl}
+                      label="Listen to this article"
+                    />
+                  </div>
+                ) : null}
+              </div>
+            </footer>
+          ) : null}
+        </div>
+      </div>
+    </article>
   );
 }

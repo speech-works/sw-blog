@@ -11,9 +11,9 @@ export default function PreviewBanner() {
   }, []);
   if (!standalone) return null;
   return (
-    <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-900">
+    <div className="preview-banner">
       <span>Preview mode — showing the latest draft.</span>
-      <a href="/next/exit-preview" className="font-semibold underline">
+      <a href="/next/exit-preview">
         Exit preview
       </a>
     </div>
